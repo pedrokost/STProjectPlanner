@@ -41,7 +41,7 @@ def sparkline(values, smallest=-1, largest=-1):
 		rng = largest - 0
 
 	if rng != 0:
-		return ''.join([  ticks[round(((val - smallest) / rng) * scale)] for val in values  ])
+		return ''.join([  ticks[min(scale, round(((val - smallest) / rng) * scale))] for val in values  ])
 	else:
 		return ''.join([ticks[0] for val in values])
 
@@ -627,7 +627,7 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 		replace_region = sublime.Region(line.end(), next_section_index)
 		self.view.replace(edit, replace_region, '\n\n```\n' + effort_content + '```\n\n')
 
-	def __draw_section_schedule(self, sections, edit, statistics):
+	def __draw_section_schedule(self, sections, edit, statistics, to_scale=False):
 
 		heading_region = self.view.find('^### (\d+w )?[Ss]ection schedule', 0)
 		if heading_region.begin() == -1:
@@ -635,20 +635,35 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 
 		line = self.view.line(heading_region)
 
-		match = re.search('(?P<num_weeks>\d+)', self.view.substr(line))
+		match = re.search('(?P<num_weeks>\d+).+', self.view.substr(line))
 		for_weeks = int(match.group('num_weeks')) if match else 30
 		for_weeks = min(for_weeks, 60)
+
+		match = re.search('.+(?P<to_scale>to scale)\s*', self.view.substr(line))
+		to_scale = True if match and match.group('to_scale') else to_scale
 
 		MAX_WIDTH = 76
 		title_width = MAX_WIDTH - for_weeks - 1
 		fmt_string = '{:<' + str(title_width) + '} {}\n'
 
-		effort_content = ''
+
+		data = []
+		smallest = 0
+		largest = 40
 		for section in sections:
 			if section.is_valid:
 				weekly_load = self.__compute_total_weekly_load(section, statistics, for_weeks=for_weeks)
-				spark = sparkline(weekly_load)
-				effort_content += fmt_string.format(truncate_middle(section.title[3:], title_width), spark)
+				largest = max(largest, max(weekly_load))
+				data.append((weekly_load, section.title[3:]))
+
+		if not to_scale:
+			largest = 40
+
+		effort_content = ''
+		for x in range(len(data)):
+			weekly_load, section_title = data[x]
+			spark = sparkline(weekly_load, smallest=smallest, largest=largest)
+			effort_content += fmt_string.format(truncate_middle(section_title, title_width), spark)
 
 		next_section_index = self.view.find('^##', line.end()).begin()
 		replace_region = sublime.Region(line.end(), next_section_index)
