@@ -1,6 +1,6 @@
 import sublime, sublime_plugin
 from subprocess import call
-import os, shutil, sys
+import os, shutil, sys, re
 from datetime import datetime, date
 from collections import namedtuple, Counter
 
@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib
 import trollop
 import sublime_requests as requests
 from .roadmap_compiler_models import Task, Section, CategorySchedule, Statistics, DaySlot
+from .roadmap_compiler_models import human_duration
 
 
 def plugin_loaded():
@@ -17,7 +18,54 @@ def plugin_loaded():
 		print(sublime.packages_path())
 		shutil.copyfile(sublime.packages_path()+"/RoadmapCompile/roadmap_trello.sublime-settings", sublime.packages_path()+"/User/roadmap_trello.sublime-settings")
 
+def extract_meta(task):
+	# TODO: extract into utility function
 
+	TASK_META_REGEX = '\[(?P<category1>\w{3})?\s?(?:(?P<duration_value1>\d{1,})(?P<duration_unit1>h|d|w|m|q))?\s?(?P<category2>\w{3})?\s?(?:(?P<duration_value2>\d{1,})(?P<duration_unit2>h|d|w|m|q))?\s?(?P<category3>\w{3})?\s?(?:(?P<duration_value3>\d{1,})(?P<duration_unit3>h|d|w|m|q))?\s?(?P<category4>\w{3})?\s?(?:(?P<duration_value4>\d{1,})(?P<duration_unit4>h|d|w|m|q))?\s?(?P<end_date>\d{4}-\d{2}-\d{2}.*)?\]$'
+	DATE_FORMAT = '%Y-%m-%d'
+
+
+	TaskMeta = namedtuple('TaskMeta', ['categories', 'end_date'])
+
+	matches = re.search(TASK_META_REGEX, task)
+
+	if matches:
+		categories = {}
+		if matches.group('category1'):
+			categories[matches.group('category1')] = {}
+			categories[matches.group('category1')]['duration_value'] = int(matches.group('duration_value1')) if matches.group('duration_value1') else None,
+			categories[matches.group('category1')]['duration_unit'] = matches.group('duration_unit1')
+		else:
+			categories['None'] = {}
+			categories['None']['duration_value'] = int(matches.group('duration_value1')) if matches.group('duration_value1') else None,
+			categories['None']['duration_unit'] = matches.group('duration_unit1')
+		if matches.group('category2'):
+			categories[matches.group('category2')] = {}
+			categories[matches.group('category2')]['duration_value'] = int(matches.group('duration_value2')) if matches.group('duration_value2') else None,
+			categories[matches.group('category2')]['duration_unit'] = matches.group('duration_unit2')
+		if matches.group('category3'):
+			categories[matches.group('category3')] = {}
+			categories[matches.group('category3')]['duration_value'] = int(matches.group('duration_value3')) if matches.group('duration_value3') else None,
+			categories[matches.group('category3')]['duration_unit'] = matches.group('duration_unit3')
+		if matches.group('category4'):
+			categories[matches.group('category4')] = {}
+			categories[matches.group('category4')]['duration_value'] = int(matches.group('duration_value4')) if matches.group('duration_value4') else None,
+			categories[matches.group('category4')]['duration_unit'] = matches.group('duration_unit4')
+
+		meta = TaskMeta(
+			categories,
+			datetime.strptime(matches.group('end_date'), DATE_FORMAT) if matches.group('end_date') else None
+		)
+		raw_meta = matches.group(0)
+	else:
+		raw_meta = ""
+		categories = {}
+		categories['None'] = {}
+		categories['None']['duration_value'] = None,
+		categories['None']['duration_unit'] = None
+		meta = TaskMeta(categories, None)
+
+	return meta
 
 class RoadmapTrello(sublime_plugin.TextCommand):
 	"""
@@ -38,6 +86,7 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 		self.token = conf.get("TRELLO_TOKEN")
 		self.board_id = conf.get("TRELLO_TEST_BOARD_ID")
 		self.skip_lists = conf.get("SKIP_LISTS")
+		self.skip_checklists = conf.get("SKIP_CHECKLISTS")
 
 		trello_connection = trollop.TrelloConnection(self.key, self.token)
 
@@ -51,7 +100,7 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 		print("It seems your token is invalid or has expired, try adding it again.\nToken URL: %s" % self.token_url(), "The error encountered was: '%s'" % e)
 
 	def token_url(self):
-		return "https://trello.com/1/connect?key=%s&name=sublime_app&response_type=token&scope=read,write" % self.key
+		return "https://trello.com/1/connect?key=%s&name=roadmap_trello&response_type=token&scope=read,write" % self.key
 
 
 	def list_exists(self, list):
@@ -184,7 +233,117 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 
 		return sections
 
+	def __compute_checkitem_duration(self, item):
+		DEFAULT_CATEGORY_DURATION = 8
+
+		meta = extract_meta(item._data['name'])
+
+		resp = {}
+
+		for category, dict in meta.categories.items():
+			if not category in resp:
+				resp[category] = DEFAULT_CATEGORY_DURATION
+
+			if meta.categories[category]['duration_value'][0] is not None and meta.categories[category]['duration_unit'] is not None:
+				resp[category] = meta.categories[category]['duration_value'][0] * Section.DURATION_MAP[meta.categories[category]['duration_unit']]
+
+		return resp
+
+	def __compute_card_duration(self, checkItems, duration_map):
+		CardDuration = namedtuple('CardDuration', ['category', 'value'])
+		DEFAULT_CARD_DURATION = 40
+
+		if len(checkItems) == 0:
+			return [CardDuration('None', DEFAULT_CARD_DURATION)]
+
+		item_durations = {}
+		for item in checkItems:
+			durations = self.__compute_checkitem_duration(item)
+			for key, value in durations.items():
+			    if not key in item_durations:
+			    	item_durations[key] = 0
+			    item_durations[key] += value
+
+		durations = []
+		for key, value in item_durations.items():
+		    temp = CardDuration(key,value)
+		    durations.append(temp)
+
+		return durations
+
+	def __update_card_metadata(self, connection, edit, task, section_title):
+		CARD_ID_REGEX = '.+https\:\/\/trello\.com\/c\/(?P<card_id>.+)\/.+'
+		match = re.search(CARD_ID_REGEX, task)
+
+		if not match:
+			return
+
+		card = connection.get_card(match.group('card_id'))
+		checklists = [checklist for checklist in card.checklists if checklist._data['name'] not in self.skip_checklists]
+
+		incomplete_items = []
+		for checklist in checklists:
+			its = [item for item in checklist.checkItems if item._data['state']=='incomplete']
+			incomplete_items += its
+
+		card_name = card.name
+		card_durations = self.__compute_card_duration(incomplete_items, Section.DURATION_MAP)
+		card_duration_human = ''
+		for dur in card_durations:	
+			card_duration_human += dur.category + ' ' + human_duration(dur.value, Section.DURATION_MAP, max_segments=3) + ' '
+		card_duration_human = card_duration_human.strip()
+		deadline = extract_meta(task).end_date
+
+		if deadline:
+			new_meta = '[{} {}]'.format(card_duration_human, deadline.strftime("%Y-%m-%d"))
+		else:
+			new_meta = '[{}]'.format(card_duration_human)
+
+		section_pos = self.view.find(section_title, 0, sublime.LITERAL)
+		task_pos = self.view.find(task, section_pos.end(), sublime.LITERAL)
+
+		# Update name
+		end_name_pos = self.view.find(']', task_pos.begin(), sublime.LITERAL)
+		region = sublime.Region(task_pos.begin() + 3, end_name_pos.begin())
+		self.view.replace(edit, region, card_name)
+
+		# Update meta
+		needs_update = task.strip()[-1] == ']'
+		line = self.view.line(task_pos.begin())
+
+		if needs_update:
+			update_pos = self.view.find('[', task_pos.begin() + 4, sublime.LITERAL)
+			update_reg = sublime.Region(update_pos.begin(), line.end())
+			self.view.replace(edit, update_reg, new_meta)
+		else:
+			self.view.insert(edit, line.end(), new_meta)
+
+
+	def __update_card_section_metadata(self, connection, edit, tasks, section_title):
+		# max_tasks = 10
+		for task in tasks:
+			self.__update_card_metadata(connection, edit, task, section_title)
+			# max_tasks -= 1
+			# if max_tasks == 0:
+				# print('Stopped after %d tasks for development' % max_tasks)
+				# break
+
+	def update_cards_metadata(self, connection, edit, matches):
+
+		for pair in matches:
+			tasks = pair.section.lines
+			self.__update_card_section_metadata(connection, edit, tasks, pair.section.title)
+
+			# print('Only try the first section while developing')
+			# break
+
 	def safe_work(self, connection, edit):
+
+		heading_region = self.view.find('^## Trello warnings', 0)
+		if heading_region:
+			if not 'ON' in self.view.substr(self.view.line(heading_region)):
+				return
+
 		content=self.view.substr(sublime.Region(0, self.view.size()))
 		sections = self.__extract_sections(content)
 
@@ -195,5 +354,7 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 		self.list_missing_lists(connection, edit)
 		self.update_last_update(edit)
 		self.add_missing_cards(connection, edit, matches)
+		self.update_cards_metadata(connection, edit, matches)
 
-		# TODO: Update task title and duration
+		# TODO: find dupes
+		# TODO: Sort cards in same order

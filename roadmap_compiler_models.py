@@ -46,6 +46,7 @@ class Task(object):
 	def __init__(self, raw):
 		# TODO; use getters and setters
 		def extract_meta(task):
+			# TODO: extract into utility function
 			TaskMeta = namedtuple('TaskMeta', ['categories', 'end_date'])
 			matches = re.search(self.TASK_META_REGEX, task)
 
