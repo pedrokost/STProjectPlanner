@@ -37,6 +37,9 @@ def sparkline(values, smallest=-1, largest=-1):
 	rng = largest - smallest
 	scale = len(ticks) - 1
 
+	if rng == 0:
+		rng = largest - 0
+
 	if rng != 0:
 		return ''.join([  ticks[round(((val - smallest) / rng) * scale)] for val in values  ])
 	else:
@@ -66,6 +69,8 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 	INVALID_SECTIONS = [
 		'## Summary',
 		'## Effort planning',
+		'## Trello warnings',
+		'## Trello warnings ON',
 	]
 	
 
@@ -531,7 +536,7 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 					formatted_marker = " %s(%s)" % (DATE_MARKER, date.today())
 					self.view.insert(edit, end_pos, formatted_marker)
 				if task.find(STRIKE) == -1:
-					task_region = self.view.find(task, 0, sublime.LITERAL)
+					task_region = self.view.line(self.view.find(task, 0, sublime.LITERAL))
 					self.view.insert(edit, task_region.begin() + 2, STRIKE)
 					self.view.insert(edit, task_region.end() + 2, STRIKE)
 					# print(task, task_region)
@@ -602,20 +607,20 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 			for week in effort[key]['effort']:
 				max_weekly_effort = max(max_weekly_effort, effort[key]['effort'][week])
 
-		effort_content = '{:<7} '.format('')
-		effort_content += "".join(["{:<5} ".format(cat) for cat in statistics.categories ]) + '\n'
+		effort_content = '{:<7}  '.format('')
+		effort_content += "".join(["{:<5}  ".format(cat) for cat in statistics.categories ]) + '\n'
 		
 		max_chars = 5
 		for x in range(for_weeks):
 			dt = date.today() + timedelta(weeks=x)
 			week = fmtweek(dt)
-			effort_content += '{:<7} '.format(week)
+			effort_content += '{:<7}  '.format(week)
 			for category in statistics.categories:
 				if week in effort[category]['effort']:
 					week_eff = '|' * (round(effort[category]['effort'][week] / max_weekly_effort * max_chars))
 				else:
 					week_eff = ''
-				effort_content += '{:<5} '.format(week_eff)
+				effort_content += '{:<5}  '.format(week_eff)
 			effort_content += '\n'
 
 		next_section_index = self.view.find('^##', line.end()).begin()
