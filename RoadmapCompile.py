@@ -110,8 +110,10 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 		return sections
 
 	def __compute_total_weekly_load(self, section, statistics, for_weeks=40):
-		tasks = [task for task in section.tasks for task in section.tasks]
+
+		tasks = [task for task in section.tasks]
 		categorized_effort = self.__compute_weekly_load(tasks, statistics)
+		
 		total_effort = {}
 		for key in categorized_effort:
 			for week in categorized_effort[key]['effort']:
