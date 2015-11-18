@@ -5,25 +5,7 @@ from collections import namedtuple, Counter
 import operator
 from operator import attrgetter
 import sublime, sublime_plugin
-
-def human_duration(total_duration, duration_categories_map, max_segments=5):
-	groupped_duration = dict.fromkeys(duration_categories_map.keys(), 0)
-
-	duration_categories = sorted(duration_categories_map.items(), key=operator.itemgetter(1), reverse=True)
-	duration_categories = [d[0] for d in duration_categories]
-
-	for duration_cat in duration_categories:
-		groupped_duration[duration_cat] = total_duration // duration_categories_map[duration_cat]
-		total_duration -= groupped_duration[duration_cat] * duration_categories_map[duration_cat]
-
-	human_time = ' '.join(["%d%s" % (groupped_duration[cat], cat) for cat in duration_categories if groupped_duration[cat] > 0])
-
-	# Cro out low precision (this should be smarte rounding)
-	if max_segments < len(human_time.split(' ')):
-		human_time = ' '.join(human_time.split(' ')[:max_segments])
-
-	return human_time
-
+from .RoadmapCompile import human_duration
 
 class DaySlot(object):
 	"""WorkDay(date, hours)"""
@@ -466,7 +448,14 @@ class Statistics(object):
 		return sorted(list(set(all_categories)))
 
 	def max_load_for_category(self, category):
-		return 8 # 8 hours
+		conf = sublime.load_settings('roadmap_compile.sublime-settings')
+		default_workload = conf.get('default_daily_category_workload')
+		overrides = conf.get("category_workloads", [])
+
+		workload = next((x['workload'] for x in overrides if x['name'] == category), default_workload)
+
+
+		return workload # 8 hours
 
 	def _compute_category_means(self):
 		# Compute mean and median duration of each category's task

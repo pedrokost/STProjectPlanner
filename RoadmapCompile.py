@@ -1,5 +1,4 @@
-import re
-import sys
+import re, os, sys, shutil
 from datetime import timedelta, datetime, date
 from collections import namedtuple, Counter
 import operator
@@ -8,6 +7,12 @@ from time import gmtime, strftime
 import sublime, sublime_plugin
 from .roadmap_compiler_models import Task, Section, CategorySchedule, Statistics, DaySlot
 
+
+def plugin_loaded():
+	if not os.path.exists(sublime.packages_path()+"/User/roadmap_compile.sublime-settings"):
+		print(sublime.packages_path())
+		shutil.copyfile(sublime.packages_path()+"/RoadmapCompile/roadmap_compile.sublime-settings", sublime.packages_path()+"/User/roadmap_compile.sublime-settings")
+
 def human_duration(total_duration, duration_categories_map, max_segments=5):
 	groupped_duration = dict.fromkeys(duration_categories_map.keys(), 0)
 
@@ -15,10 +20,11 @@ def human_duration(total_duration, duration_categories_map, max_segments=5):
 	duration_categories = [d[0] for d in duration_categories]
 
 	for duration_cat in duration_categories:
-		groupped_duration[duration_cat] = total_duration // duration_categories_map[duration_cat]
+		groupped_duration[duration_cat] = int(round(total_duration / duration_categories_map[duration_cat]))
 		total_duration -= groupped_duration[duration_cat] * duration_categories_map[duration_cat]
 
 	human_time = ' '.join(["%d%s" % (groupped_duration[cat], cat) for cat in duration_categories if groupped_duration[cat] > 0])
+
 
 	# Cro out low precision (this should be smarte rounding)
 	if max_segments < len(human_time.split(' ')):
@@ -73,7 +79,6 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 		'## Trello warnings ON',
 	]
 	
-
 	def __section_indices(self, lines):
 		SectionIndex = namedtuple('SectionIndex', ['index', 'is_valid'])
 		indices = []

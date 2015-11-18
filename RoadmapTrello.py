@@ -289,9 +289,19 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 		card_name = card.name
 		card_durations = self.__compute_card_duration(incomplete_items, Section.DURATION_MAP)
 		card_duration_human = ''
-		for dur in card_durations:	
-			category = dur.category[:3]
-			card_duration_human += category + ' ' + human_duration(dur.value, Section.DURATION_MAP, max_segments=1) + ' '
+
+		# Ensure None is the first category in the pipeline
+		# Then I don't need to print it anymore, making my compiler smarter
+		# as it will no longer distinguish between None and Non
+		nonedu = [card for card in card_durations if card.category=="None"]
+		if len(nonedu) > 0:
+			card_durations.remove(nonedu[0])
+			card_durations = nonedu + card_durations
+
+		for dur in card_durations:
+			category = '' if dur.category == 'None' else dur.category[:3] 
+			card_duration_human += '{} {} '.format(category, human_duration(dur.value, Section.DURATION_MAP, max_segments=1))
+
 		card_duration_human = card_duration_human.strip()
 		deadline = extract_meta(task).end_date
 
@@ -357,5 +367,3 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 		self.add_missing_cards(connection, edit, matches)
 		self.update_cards_metadata(connection, edit, matches)
 
-		# TODO: find dupes
-		# TODO: Sort cards in same order
