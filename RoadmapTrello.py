@@ -290,7 +290,8 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 		card_durations = self.__compute_card_duration(incomplete_items, Section.DURATION_MAP)
 		card_duration_human = ''
 		for dur in card_durations:	
-			card_duration_human += dur.category + ' ' + human_duration(dur.value, Section.DURATION_MAP, max_segments=1) + ' '
+			category = dur.category[:3]
+			card_duration_human += category + ' ' + human_duration(dur.value, Section.DURATION_MAP, max_segments=1) + ' '
 		card_duration_human = card_duration_human.strip()
 		deadline = extract_meta(task).end_date
 
