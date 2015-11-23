@@ -332,7 +332,6 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 		if needs_update:
 			update_pos = self.view.find('[', task_pos.begin() + 4, sublime.LITERAL)
 			update_reg = sublime.Region(update_pos.begin(), line.end())
-			print(self.view.substr(update_reg))
 			self.view.replace(edit, update_reg, new_meta)
 		else:
 			self.view.insert(edit, line.end(), new_meta)
@@ -423,7 +422,7 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 		# 	'category': 'Missing lists',
 		# 	'errors': ['bla bla']
 		# }]
-		self.debug = True
+		self.debug = False
 
 		if self.debug:
 			print("DEBUG MODE IS ON")
