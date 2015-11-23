@@ -28,6 +28,7 @@ def extract_meta(task):
 
 	matches = re.search(TASK_META_REGEX, task)
 
+
 	if matches:
 		categories = {}
 		if matches.group('category1'):
@@ -86,6 +87,7 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 		self.board_id = conf.get("TRELLO_TEST_BOARD_ID")
 		self.skip_lists = conf.get("SKIP_LISTS")
 		self.skip_checklists = conf.get("SKIP_CHECKLISTS")
+		self.debug = False
 
 		trello_connection = trollop.TrelloConnection(self.key, self.token)
 
@@ -112,24 +114,12 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 		lists = [list for list in board.lists if list.name not in self.skip_lists]
 
 		missing_lists = [list for list in lists if not self.list_exists(list)]
-		print('Missing lists', missing_lists)
 
-		heading_region = self.view.find('^### Missing lists', 0)
-		if heading_region.begin() == -1:
-			print('Missing lists section not found')
-			return
-
-		line = self.view.line(heading_region)
-
-		next_section_index = self.next_section_start(line.end())
-
-		replace_region = sublime.Region(line.end(), next_section_index)
-		content = ''
-		for list in missing_lists:
-			content += '- ' + list.name + '\n'
-
-		self.view.replace(edit, replace_region, '\n\n' + content + '\n')
-		# content = 'Last updated: {}'.format(datetime.now().strftime("%Y-%m-%d"))
+		if len(missing_lists) > 0:
+			self.errors.append({
+				'category': 'Missing lists',
+				'errors': [list.name for list in missing_lists]
+			})
 
 	def find_matching_section(self, list, sections):
 
@@ -143,6 +133,7 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 	def find_matching_sections(self, lists, sections):
 		matches = []
 		ListPair = namedtuple('ListPair', ['list', 'section'])
+
 		for list in lists:
 			section = self.find_matching_section(list, sections)
 			if section is not None:
@@ -248,12 +239,17 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 
 		return resp
 
-	def __compute_card_duration(self, checkItems, duration_map):
+	def __compute_card_duration(self, checkItems, duration_map, num_checklists, task):
 		CardDuration = namedtuple('CardDuration', ['category', 'value'])
 		DEFAULT_CARD_DURATION = 40
+		COMPLETED_CARD_DURATION = 0
 
 		if len(checkItems) == 0:
-			return [CardDuration('None', DEFAULT_CARD_DURATION)]
+			if num_checklists > 0:
+				self.add_error('Possibly Completed Cards', task)
+				return [CardDuration('None', COMPLETED_CARD_DURATION)]
+			else:
+				return [CardDuration('None', DEFAULT_CARD_DURATION)]
 
 		item_durations = {}
 		for item in checkItems:
@@ -278,6 +274,10 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 			return
 
 		card = connection.get_card(match.group('card_id'))
+
+		if card.closed:
+			self.add_error('Archived cards', card._data['name'])
+
 		checklists = [checklist for checklist in card.checklists if checklist._data['name'] not in self.skip_checklists]
 
 		incomplete_items = []
@@ -294,7 +294,7 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 		# print('Kept {} sure items from a total of {}'.format(len(schedulable_items), len(incomplete_items)))
 
 		card_name = card.name
-		card_durations = self.__compute_card_duration(schedulable_items, Section.DURATION_MAP)
+		card_durations = self.__compute_card_duration(schedulable_items, Section.DURATION_MAP, len(checklists), task)
 		card_duration_human = ''
 
 		# Ensure None is the first category in the pipeline
@@ -322,40 +322,111 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 
 		# Update name
 		end_name_pos = self.view.find(']', task_pos.begin(), sublime.LITERAL)
-		region = sublime.Region(task_pos.begin() + 3, end_name_pos.begin())
+		region = sublime.Region(task_pos.begin() + 1, end_name_pos.begin())
 		self.view.replace(edit, region, card_name)
 
 		# Update meta
-		needs_update = task.strip()[-1] == ']'
 		line = self.view.line(task_pos.begin())
+		needs_update = self.view.substr(line).strip()[-1] == ']'
 
 		if needs_update:
 			update_pos = self.view.find('[', task_pos.begin() + 4, sublime.LITERAL)
 			update_reg = sublime.Region(update_pos.begin(), line.end())
+			print(self.view.substr(update_reg))
 			self.view.replace(edit, update_reg, new_meta)
 		else:
 			self.view.insert(edit, line.end(), new_meta)
 
-
 	def __update_card_section_metadata(self, connection, edit, tasks, section_title):
-		# max_tasks = 10
+		max_tasks = 1
 		for task in tasks:
 			self.__update_card_metadata(connection, edit, task, section_title)
-			# max_tasks -= 1
-			# if max_tasks == 0:
-				# print('Stopped after %d tasks for development' % max_tasks)
-				# break
+			max_tasks -= 1
+
+			if self.debug:
+				print(task)
+
+			if self.debug and max_tasks == 0:
+				print('Stopped after %d tasks for development' % max_tasks)
+				break
+
+	def add_error(self, category, error):
+		exists = [err for err in self.errors if err['category'] == category]
+
+		if exists:
+			exists[0]['errors'].append(error)
+		else:
+			self.errors.append({
+				'category': category,
+				'errors': [error]
+			})
 
 	def update_cards_metadata(self, connection, edit, matches):
 
 		for pair in matches:
-			tasks = pair.section.lines
+			tasks = [task.description for task in pair.section.tasks]
 			self.__update_card_section_metadata(connection, edit, tasks, pair.section.title)
 
-			# print('Only try the first section while developing')
-			# break
+			if self.debug:
+				break
+
+	def display_errors(self, edit):
+		heading_region = self.view.find('^### Errors', 0)
+		if heading_region.begin() == -1:
+			print('Errors section not found')
+			return
+
+		line = self.view.line(heading_region)
+
+		next_section_index = self.next_section_start(line.end())
+
+		replace_region = sublime.Region(line.end(), next_section_index)
+		
+		if len(self.errors) == 0:
+			content = 'There are no errors\n\n'
+		else:
+			content = ''
+			for errorgroup in self.errors:
+				content += '**{}**:\n'.format(errorgroup['category'])
+				for error in errorgroup['errors']:
+					content += '- {}\n'.format(error)
+				content += '\n'
+
+		self.view.replace(edit, replace_region, '\n\n' + content + '')
+		# content = 'Last updated: {}'.format(datetime.now().strftime("%Y-%m-%d"))
+
+	def warn_incorrect_list_order(self, lists, sections):
+		list_titles = [list._data['name'] for list in lists]
+		section_titles = [section.title[3:] for section in sections]
+
+		indices = []
+		for list_title in list_titles:
+			try:
+				indices.append(section_titles.index(list_title))
+			except:
+				indices.append(-1)
+
+		for index_idx, index in enumerate(indices):
+			if index_idx > 0:
+				if indices[index_idx - 1] > index:
+					self.add_error('List ordering', '*{}* should be placed before *{}*'.format(list_titles[index_idx-1], list_titles[index_idx]))
+
+
 
 	def safe_work(self, connection, edit):
+
+		self.errors = []
+		# self.errors = [{
+		# 	'category': 'Archived cards',
+		# 	'errors': ['ab2', 'aarstras', 'arstras']
+		# }, {
+		# 	'category': 'Missing lists',
+		# 	'errors': ['bla bla']
+		# }]
+		self.debug = True
+
+		if self.debug:
+			print("DEBUG MODE IS ON")
 
 		heading_region = self.view.find('^## Trello warnings', 0)
 		if heading_region:
@@ -370,7 +441,9 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 		matches = self.find_matching_sections(lists, sections)
 
 		self.list_missing_lists(connection, edit)
-		self.update_last_update(edit)
+		self.warn_incorrect_list_order(lists, sections)
 		self.add_missing_cards(connection, edit, matches)
 		self.update_cards_metadata(connection, edit, matches)
+		self.update_last_update(edit)
+		self.display_errors(edit)
 
