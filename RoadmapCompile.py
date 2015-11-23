@@ -2,72 +2,18 @@ import re, os, sys, shutil
 from datetime import timedelta, datetime, date
 from collections import namedtuple, Counter
 import operator
-from operator import attrgetter, methodcaller
+from operator import attrgetter, methodcaller, itemgetter
 from time import gmtime, strftime
 import sublime, sublime_plugin
 from .roadmap_compiler_models import Task, Section, CategorySchedule, Statistics, DaySlot
-
+from .roadmap_compiler_models import human_duration
+from .utils import sparkline, truncate_middle, weeknumber, fmtweek
+from .utils import next_available_weekday, human_duration
 
 def plugin_loaded():
 	if not os.path.exists(sublime.packages_path()+"/User/roadmap_compile.sublime-settings"):
 		print(sublime.packages_path())
 		shutil.copyfile(sublime.packages_path()+"/RoadmapCompile/roadmap_compile.sublime-settings", sublime.packages_path()+"/User/roadmap_compile.sublime-settings")
-
-def human_duration(total_duration, duration_categories_map, max_segments=5):
-	groupped_duration = dict.fromkeys(duration_categories_map.keys(), 0)
-
-	duration_categories = sorted(duration_categories_map.items(), key=operator.itemgetter(1), reverse=True)
-	duration_categories = [d[0] for d in duration_categories]
-
-	for duration_cat in duration_categories:
-		groupped_duration[duration_cat] = int(round(total_duration / duration_categories_map[duration_cat]))
-		total_duration -= groupped_duration[duration_cat] * duration_categories_map[duration_cat]
-
-	human_time = ' '.join(["%d%s" % (groupped_duration[cat], cat) for cat in duration_categories if groupped_duration[cat] > 0])
-
-
-	# Cro out low precision (this should be smarte rounding)
-	if max_segments < len(human_time.split(' ')):
-		human_time = ' '.join(human_time.split(' ')[:max_segments])
-
-	return human_time
-
-def sparkline(values, smallest=-1, largest=-1):
-	if len(values) == 0:
-		return ''
-
-	ticks = ['▁', '▂', '▃', '▄', '▅', '▆', '▇']
-	values = [float(val) for val in values]
-	smallest = min(values) if smallest == -1 else smallest
-	largest = max(values) if largest == -1 else largest
-	rng = largest - smallest
-	scale = len(ticks) - 1
-
-	if rng == 0:
-		rng = largest - 0
-
-	if rng != 0:
-		return ''.join([  ticks[min(scale, round(((val - smallest) / rng) * scale))] for val in values  ])
-	else:
-		return ''.join([ticks[0] for val in values])
-
-def truncate_middle(s, n):
-	if len(s) <= n:
-		# string is already short-enough
-		return s
-	# half of the size, minus the 3 .'s
-	n_2 = int(int(n) / 2 - 3)
-	# whatever's left
-	n_1 = int(n - n_2 - 3)
-
-	return '{0}...{1}'.format(s[:n_1], s[-n_2:])
-
-def weeknumber(datetime):
-	return datetime.date().isocalendar()[1]
-
-def fmtweek(datetime):
-	(year, week) = datetime.isocalendar()[:2]
-	return '%04dW%02d' % (year, week)
 
 class RoadmapCompile(sublime_plugin.TextCommand):
 	HEADING_IDENTIFIER = '#'
@@ -91,7 +37,7 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 
 		return indices
 
-	def __extract_sections(self, content):
+	def _extract_sections(self, content):
 
 		array = content.split('\n')
 		section_indices = self.__section_indices(array)
@@ -114,7 +60,7 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 
 		return sections
 
-	def __compute_total_weekly_load(self, section, statistics, for_weeks=40):
+	def _compute_total_weekly_load(self, section, statistics, for_weeks=40):
 
 		tasks = [task for task in section.tasks]
 		categorized_effort = self.__compute_weekly_load(tasks, statistics)
@@ -134,8 +80,7 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 
 		return weekly_efforts
 
-
-	def __update_section_timings(self, sections, edit, statistics):
+	def _update_section_timings(self, sections, edit, statistics):
 		"""
 		Below each section write a short summary of number of tasks and
 		planned durations
@@ -144,7 +89,7 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 		last_point = 0
 		for section in sections:
 			if section.is_valid:
-				weekly_load = self.__compute_total_weekly_load(section, statistics)
+				weekly_load = self._compute_total_weekly_load(section, statistics)
 				spark = sparkline(weekly_load)
 
 				if section.needs_update:
@@ -158,8 +103,7 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 					self.view.insert(edit, line.end(), content)
 				last_point = line.end()
 
-
-	def __update_upcoming_tasks(self, sections, edit, statistics):
+	def _update_upcoming_tasks(self, sections, edit, statistics):
 		"""
 		Print the top upcoming tasks in the `### Upcoming tasks` section. 
 		"""
@@ -226,18 +170,14 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 		replace_region = sublime.Region(line.end(), next_section_index)
 		self.view.replace(edit, replace_region, '\n\n' + ''.join(all_task_groups_content) + '\n\n')
 
-	def __all_categories(self, all_tasks):
-		return set([task.meta.category for task in all_tasks])
-
-
-	def __content_for_total_effort_chart(self, sections):
+	def _content_for_total_effort_chart(self, sections):
 		durations = [section.duration[2] for section in sections]
 		summed_durations = sum(
 			(Counter(dict(x)) for x in durations),
 			Counter())
 		max_key_length = max([len(key) for key in summed_durations.keys()])
 		max_value = max([value for value in summed_durations.values()])
-		sorted_summed_durations = sorted(summed_durations.items(), key=operator.itemgetter(1), reverse=True)
+		sorted_summed_durations = sorted(summed_durations.items(), key=itemgetter(1), reverse=True)
 
 		durations_chart = []
 		scale_factor = 30/max_value
@@ -250,91 +190,22 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 		effort_content = '```\n' + '\n'.join(durations_chart) + '\n```'
 		return effort_content
 
-	def __content_for_timeline(self, sections, statistics):
-		FUTURE_DAYS = 30
-
-		# nested_tasks = map(lambda section: section.tasks, sections)
-		# all_tasks = [task for tasks in nested_tasks for task in tasks]
-
-		# schedules = []
-		# for category in statistics['categories_list']:
-		# 	category_tasks = filter(lambda t: t.meta.category == category, all_tasks)
-		# 	schedules.append(CategorySchedule(str(category), category_tasks, max_effort=8))
-
-		# Print the schedules
-		effort_content = '### Effort timeline\n'
-
-		min_date = datetime.combine(date.today(), datetime.min.time())
-		max_date = min_date + timedelta(days=FUTURE_DAYS)
-		for schedule in schedules:
-			effort_content += '\n\n*' + schedule.name + ':*\n'
-			timeline = [0] * FUTURE_DAYS
-			all_tasks = [task for task in schedule.tasks if task.scheduled_start_datetime is not None]
-
-			# print(all_tasks, schedule.tasks)
-
-			for task in all_tasks:
-				if task.scheduled_start_datetime <= max_date and task.scheduled_end_datetime >= min_date:
-
-					# Add first day
-					amount = datetime.combine(task.scheduled_start_datetime, datetime.max.time()) - task.scheduled_start_datetime
-					amount = amount.total_seconds() // 3600
-					bucket = (task.scheduled_start_datetime - min_date).days
-					timeline[bucket] += amount
-
-					# Add last day effort
-					if task.scheduled_start_datetime.date() != task.scheduled_end_datetime.date():
-						amount = task.scheduled_end_datetime - datetime.combine(task.scheduled_end_datetime, datetime.min.time()) 
-						amount = amount.total_seconds() // 3600
-						bucket = (task.scheduled_end_datetime - min_date).days
-						timeline[bucket] += amount
-
-					if task.scheduled_end_datetime - task.scheduled_start_datetime > timedelta(days=2):
-						cur_dt = task.scheduled_start_datetime + timedelta(days=1)
-						while cur_dt.day < task.scheduled_end_datetime.day:
-							amount = 24
-							bucket = (cur_dt - min_date).days
-							timeline[bucket] += amount
-							cur_dt += timedelta(days=1)
-
-					# Add all days in between
-
-					# cur_dt = task.scheduled_start_datetime + timdelta(days=1)
-					# while cur_dt <= task.scheduled_end_datetime:
-					# 	# bucket = (task.scheduled_start_datetime - min_date).days
-					# 	# timeline[bucket] = task.duration
-					# 	cur_dt += timedelta(days=1)
-
-
-
-			timeline_chart = []
-			scale_factor = 24/24  # 30 chars = 8 hrs of work
-			for index, effort in enumerate(timeline):
-				dateval = min_date + timedelta(days=(index+1))
-				chart_row = "%s %s" % (dateval.strftime("%Y-%m-%d"), "#" * int(effort * scale_factor))
-				timeline_chart.append(chart_row)
-
-			effort_content += '```\n' + '\n'.join(timeline_chart) + '\n```'
-
-		return effort_content
-
-	def __update_planned_effort(self, sections, edit, statistics):
-		effort_content = self.__content_for_total_effort_chart(sections)
+	def _update_planned_effort(self, sections, edit, statistics):
+		effort_content = self._content_for_total_effort_chart(sections)
 
 		line = self.view.line(self.view.find('^### Total estimated effort', 0))
 		next_section_index = self.view.find('^##', line.end()).begin()
 		replace_region = sublime.Region(line.end(), next_section_index)
 		self.view.replace(edit, replace_region, '\n\n' + effort_content + '\n\n')
 
-	def __compute_statistics(self, sections):
+	def _compute_statistics(self, sections):
 		"""
 		Computes statistics to avoid computing it several times later
 		"""
 
 		return Statistics(sections)
 
-
-	def __estimate_missing_data(self, sections, stats):
+	def _estimate_missing_data(self, sections, stats):
 		"""
 		Fill-in the gaps: task duration.
 		"""
@@ -344,22 +215,7 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 					if not task.category_duration(category, fake_valid=False):
 						task.set_fake_duration(category, stats.get_mean_duration(category))
 
-	def __next_available_weekday(self, dt):
-		MONDAY=0
-		SUNDAY=6
-
-		if dt.weekday() == MONDAY:
-			# Skip weekends
-			delta = timedelta(days=3)
-		elif dt.weekday() == SUNDAY:
-			# Skip weekends
-			delta = timedelta(days=2)
-		else:
-			delta = timedelta(days=1)
-		return dt - delta
-
-
-	def __schedule_task_with_deadline(self, task, available_before_date, available_effort, max_effort, category):
+	def _schedule_task_with_deadline(self, task, available_before_date, available_effort, max_effort, category):
 		"""
 		The scheduler is only precise to the day,
 		but will make sure you nevere have more than max_effort hours in 
@@ -402,14 +258,14 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 			available_effort -= block_duration
 			duration -= block_duration
 			if available_effort == 0:
-				cur_dt = self.__next_available_weekday(cur_dt)
+				cur_dt = next_available_weekday(cur_dt)
 				available_effort = max_effort
 
 		task.set_slots_for_category(category, slots)
 
 		return (cur_dt, available_effort)
 
-	def __schedule_task_wout_deadline(self, task, first_available_date, max_effort, category, all_tasks):
+	def _schedule_task_wout_deadline(self, task, first_available_date, max_effort, category, all_tasks):
 		MONDAY=0
 		FRIDAY=4
 		SATURDAY=5
@@ -476,7 +332,7 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 
 		return first_available_date
 
-	def __compute_schedule_for_category(self, tasks, category, stats):
+	def _compute_schedule_for_category(self, tasks, category, stats):
 		"""
 		End date is understood such, that max_load can be done also on that day
 		"""
@@ -489,25 +345,26 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 		tasks_w_deadline = sorted(tasks_w_deadline, key=attrgetter('meta.end_date'), reverse=True)
 
 		for task in tasks_w_deadline:
-			(last_available_date, remaing_effort) = self.__schedule_task_with_deadline(task, last_available_date, remaing_effort, max_load, category)
+			(last_available_date, remaing_effort) = self._schedule_task_with_deadline(task, last_available_date, remaing_effort, max_load, category)
 
 		first_available_date = datetime.combine(date.today(), datetime.min.time())
 		remaing_effort = max_load # assume start at 0 (to avoid modifying schedule during the day)
 		for task in tasks_wout_deadline:
-			first_available_date = self.__schedule_task_wout_deadline(task, first_available_date, max_load, category, tasks)
+			first_available_date = self._schedule_task_wout_deadline(task, first_available_date, max_load, category, tasks)
 
 
 		# schedules.append(CategorySchedule(str(category), category_tasks, max_effort=8))
-	def __compute_schedule(self, sections, statistics):
+
+	def _compute_schedule(self, sections, statistics):
 		nested_tasks = map(lambda section: section.tasks, sections)
 		all_tasks = [task for tasks in nested_tasks for task in tasks]
 
 		schedules = []
 		for category in statistics.categories:
 			category_tasks = filter(lambda t: t.has_category(category), all_tasks)
-			self.__compute_schedule_for_category(list(category_tasks), category, statistics)
+			self._compute_schedule_for_category(list(category_tasks), category, statistics)
 
-	def __fold_links(self):
+	def _fold_links(self):
 		startMarker = "]("
 		endMarker = ")"
 		startpos = self.view.find_all(startMarker, sublime.LITERAL)
@@ -529,7 +386,7 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 
 		self.view.fold(regions)
 
-	def __mark_date_completed(self, sections, edit):
+	def _mark_date_completed(self, sections, edit):
 		DATE_MARKER = "@done"
 		STRIKE = "~~"
 		for section in sections:
@@ -543,31 +400,6 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 					self.view.insert(edit, task_region.begin() + 2, STRIKE)
 					self.view.insert(edit, task_region.end() + 2, STRIKE)
 					# formatted_marker = " %s(%s)" % (DATE_MARKER, date.today())
-
-	# def __draw_schedule(self, sections, edit, statistics, for_days=30):
-	# 	nested_tasks = map(lambda section: section.tasks, sections)
-	# 	all_tasks = [task for tasks in nested_tasks for task in tasks]
-
-	# 	min_date = datetime.combine(date.today(), datetime.min.time())
-	# 	max_date = min_date + timedelta(days=for_days)
-
-	# 	effort_content = "\n\n"
-	# 	for category in statistics.categories:
-	# 		effort_content += category + '\n'
-	# 		timeline = [0] * for_days
-	# 		cat_tasks = [task for task in all_tasks if task.has_category(category)]
-	# 		for task in cat_tasks:
-	# 			for slot in task.get_slots_for_category(category):
-	# 				if slot.date >= min_date and slot.date < max_date:
-	# 					bucket = (slot.date - min_date).days
-	# 					timeline[bucket] += slot.hours
-	# 		effort_content += str(timeline) + '\n\n'
-
-	# 	line = self.view.line(self.view.find('^### Weekly effort timeline', 0))
-	# 	next_section_index = self.view.find('^##', line.end()).begin()
-	# 	replace_region = sublime.Region(line.end(), next_section_index)
-	# 	self.view.replace(edit, replace_region, effort_content)
-
 
 	def __compute_weekly_load(self, tasks, statistics):
 
@@ -589,7 +421,7 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 			effort[str(category)]=cat_effort
 		return effort
 
-	def __draw_weekly_schedule(self, sections, edit, statistics):
+	def _draw_weekly_schedule(self, sections, edit, statistics):
 
 		heading_region = self.view.find('^### (\d+ )?Week(.+) effort timeline', 0)
 		if heading_region.begin() == -1:
@@ -631,7 +463,7 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 		replace_region = sublime.Region(line.end(), next_section_index)
 		self.view.replace(edit, replace_region, '\n\n```\n' + effort_content + '```\n\n')
 
-	def __draw_section_schedule(self, sections, edit, statistics, to_scale=False):
+	def _draw_section_schedule(self, sections, edit, statistics, to_scale=False):
 
 		heading_region = self.view.find('^### (\d+w )?[Ss]ection schedule', 0)
 		if heading_region.begin() == -1:
@@ -656,7 +488,7 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 		largest = 40
 		for section in sections:
 			if section.is_valid:
-				weekly_load = self.__compute_total_weekly_load(section, statistics, for_weeks=for_weeks)
+				weekly_load = self._compute_total_weekly_load(section, statistics, for_weeks=for_weeks)
 				largest = max(largest, max(weekly_load))
 				data.append((weekly_load, section.title[3:]))
 
@@ -673,8 +505,7 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 		replace_region = sublime.Region(line.end(), next_section_index)
 		self.view.replace(edit, replace_region, '\n\n```\n' + effort_content + '```\n\n')
 
-
-	def __update_timestamp(self, edit):
+	def _update_timestamp(self, edit):
 
 		heading_region = self.view.find('^# Roadmap', 0)
 		if heading_region.begin() == -1:
@@ -689,17 +520,17 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 
 	def run(self, edit):		
 		content=self.view.substr(sublime.Region(0, self.view.size()))
-		sections = self.__extract_sections(content)
-		statistics = self.__compute_statistics(sections)
-		self.__estimate_missing_data(sections, statistics)
-		self.__compute_schedule(sections, statistics)
+		sections = self._extract_sections(content)
+		statistics = self._compute_statistics(sections)
+		self._estimate_missing_data(sections, statistics)
+		self._compute_schedule(sections, statistics)
 
-		self.__mark_date_completed(sections, edit)
-		self.__update_section_timings(sections, edit, statistics)
-		self.__update_upcoming_tasks(sections, edit, statistics)
-		self.__update_planned_effort(sections, edit, statistics)
-		self.__draw_weekly_schedule(sections, edit, statistics)
-		self.__draw_section_schedule(sections, edit, statistics)
-		self.__update_timestamp(edit)
+		self._mark_date_completed(sections, edit)
+		self._update_section_timings(sections, edit, statistics)
+		self._update_upcoming_tasks(sections, edit, statistics)
+		self._update_planned_effort(sections, edit, statistics)
+		self._draw_weekly_schedule(sections, edit, statistics)
+		self._draw_section_schedule(sections, edit, statistics)
+		self._update_timestamp(edit)
 
-		self.__fold_links()
+		self._fold_links()

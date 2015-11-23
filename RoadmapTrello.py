@@ -9,8 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib
 
 import trollop
 import sublime_requests as requests
-from .roadmap_compiler_models import Task, Section, CategorySchedule, Statistics, DaySlot
-from .roadmap_compiler_models import human_duration
+from .roadmap_compiler_models import Task, Section, CategorySchedule, Statistics, DaySlot, human_duration
 
 
 def plugin_loaded():
@@ -286,8 +285,16 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 			its = [item for item in checklist.checkItems if item._data['state']=='incomplete']
 			incomplete_items += its
 
+		# Filter out cards with the "M"-aybe flag
+		schedulable_items = []
+		for item in incomplete_items:
+			if not '[M ' in item._data['name'] and not '[M]' in item._data['name']:
+				schedulable_items.append(item)
+
+		# print('Kept {} sure items from a total of {}'.format(len(schedulable_items), len(incomplete_items)))
+
 		card_name = card.name
-		card_durations = self.__compute_card_duration(incomplete_items, Section.DURATION_MAP)
+		card_durations = self.__compute_card_duration(schedulable_items, Section.DURATION_MAP)
 		card_duration_human = ''
 
 		# Ensure None is the first category in the pipeline

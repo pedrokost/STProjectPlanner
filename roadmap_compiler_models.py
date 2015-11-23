@@ -2,10 +2,9 @@ import re
 import sys
 from datetime import timedelta, datetime, date
 from collections import namedtuple, Counter
-import operator
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 import sublime, sublime_plugin
-from .RoadmapCompile import human_duration
+from .utils import human_duration
 
 class DaySlot(object):
 	"""WorkDay(date, hours)"""
@@ -15,8 +14,6 @@ class DaySlot(object):
 		
 	def __repr__(self):
 		return "%s - %d hours" % (self.date, self.hours)
-		
-
 
 class Task(object):
 	"""Task(raw)"""
@@ -260,7 +257,7 @@ class Section(object):
 	@property
 	def smart_duration(self):
 		(known_duration, untagged_count, category_durations) = self.duration
-		sorted_cat_durs = sorted(category_durations.items(), key=operator.itemgetter(1), reverse=True)
+		sorted_cat_durs = sorted(category_durations.items(), key=itemgetter(1), reverse=True)
 		
 		if known_duration > 0:
 			str = human_duration(known_duration, self.DURATION_MAP)
