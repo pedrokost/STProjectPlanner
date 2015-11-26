@@ -47,6 +47,10 @@ class Task(object):
 		return self.slots[category] if category in self.slots else []
 
 	@property
+	def is_mandatory(self):
+		return not self.meta.optional
+
+	@property
 	def start_date(self):
 		"""
 		It's the date when it needs to start to be finished on time.
@@ -184,7 +188,9 @@ class Section(object):
 		self._lines = lines
 		self._is_valid = is_valid
 		self._row_at = row_at
-		self._tasks = [Task(raw_task) for raw_task in self.raw_tasks if self.is_valid]
+
+		all_tasks = [Task(raw_task) for raw_task in self.raw_tasks if self.is_valid]
+		self._tasks = [task for task in all_tasks if task.is_mandatory]
 
 	@property
 	def title(self):

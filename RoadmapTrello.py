@@ -411,8 +411,6 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 				if indices[index_idx - 1] > index:
 					self.add_error('List ordering', '*{}* should be placed before *{}*'.format(list_titles[index_idx-1], list_titles[index_idx]))
 
-
-
 	def safe_work(self, connection, edit):
 
 		self.errors = []
