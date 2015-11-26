@@ -4,7 +4,7 @@ from datetime import timedelta, datetime, date
 from collections import namedtuple, Counter
 from operator import attrgetter, itemgetter
 import sublime, sublime_plugin
-from .utils import human_duration
+from .utils import human_duration, mean, extract_task_metadata
 
 class DaySlot(object):
 	"""WorkDay(date, hours)"""
@@ -18,65 +18,13 @@ class DaySlot(object):
 class Task(object):
 	"""Task(raw)"""
 
-	# TASK_META_REGEX = '\[(?P<category>\w{3})?\s?(?:(?P<duration_value>\d{1,})(?P<duration_unit>h|d|w|m|q))?\s?(?P<end_date>\d{4}-\d{2}-\d{2}.*)?\]$'
-	TASK_META_REGEX = '\[(?P<category1>\w{3})?\s?(?:(?P<duration_value1>\d{1,})(?P<duration_unit1>h|d|w|m|q))?\s?(?P<category2>\w{3})?\s?(?:(?P<duration_value2>\d{1,})(?P<duration_unit2>h|d|w|m|q))?\s?(?P<category3>\w{3})?\s?(?:(?P<duration_value3>\d{1,})(?P<duration_unit3>h|d|w|m|q))?\s?(?P<category4>\w{3})?\s?(?:(?P<duration_value4>\d{1,})(?P<duration_unit4>h|d|w|m|q))?\s?(?P<category5>\w{3})?\s?(?:(?P<duration_value5>\d{1,})(?P<duration_unit5>h|d|w|m|q))?\s?(?P<category6>\w{3})?\s?(?:(?P<duration_value6>\d{1,})(?P<duration_unit6>h|d|w|m|q))?\s?(?P<end_date>\d{4}-\d{2}-\d{2}.*)?\]$'
 	DATE_FORMAT = '%Y-%m-%d'
 
 	def __init__(self, raw):
-		# TODO; use getters and setters
-		def extract_meta(task):
-			# TODO: extract into utility function
-			TaskMeta = namedtuple('TaskMeta', ['categories', 'end_date'])
-			matches = re.search(self.TASK_META_REGEX, task)
-
-			if matches:
-				categories = {}
-				if matches.group('category1'):
-					categories[matches.group('category1')] = {}
-					categories[matches.group('category1')]['duration_value'] = int(matches.group('duration_value1')) if matches.group('duration_value1') else None,
-					categories[matches.group('category1')]['duration_unit'] = matches.group('duration_unit1')
-				else:
-					categories['None'] = {}
-					categories['None']['duration_value'] = int(matches.group('duration_value1')) if matches.group('duration_value1') else None,
-					categories['None']['duration_unit'] = matches.group('duration_unit1')
-				if matches.group('category2'):
-					categories[matches.group('category2')] = {}
-					categories[matches.group('category2')]['duration_value'] = int(matches.group('duration_value2')) if matches.group('duration_value2') else None,
-					categories[matches.group('category2')]['duration_unit'] = matches.group('duration_unit2')
-				if matches.group('category3'):
-					categories[matches.group('category3')] = {}
-					categories[matches.group('category3')]['duration_value'] = int(matches.group('duration_value3')) if matches.group('duration_value3') else None,
-					categories[matches.group('category3')]['duration_unit'] = matches.group('duration_unit3')
-				if matches.group('category4'):
-					categories[matches.group('category4')] = {}
-					categories[matches.group('category4')]['duration_value'] = int(matches.group('duration_value4')) if matches.group('duration_value4') else None,
-					categories[matches.group('category4')]['duration_unit'] = matches.group('duration_unit4')
-				if matches.group('category5'):
-					categories[matches.group('category5')] = {}
-					categories[matches.group('category5')]['duration_value'] = int(matches.group('duration_value5')) if matches.group('duration_value5') else None,
-					categories[matches.group('category5')]['duration_unit'] = matches.group('duration_unit5')
-				if matches.group('category6'):
-					categories[matches.group('category6')] = {}
-					categories[matches.group('category6')]['duration_value'] = int(matches.group('duration_value6')) if matches.group('duration_value6') else None,
-					categories[matches.group('category6')]['duration_unit'] = matches.group('duration_unit6')
-
-				meta = TaskMeta(
-					categories,
-					datetime.strptime(matches.group('end_date'), self.DATE_FORMAT) if matches.group('end_date') else None
-				)
-				raw_meta = matches.group(0)
-			else:
-				raw_meta = ""
-				categories = {}
-				categories['None'] = {}
-				categories['None']['duration_value'] = None,
-				categories['None']['duration_unit'] = None
-				meta = TaskMeta(categories, None)
-
-			return (meta, raw_meta)
 		
 		def extract_description(task):
-			meta_index = re.search(self.TASK_META_REGEX, task)
+			TASK_META_MATCH_REGEX = '\[(?P<flags>M)?\s?(?P<categories>(\d+\w\s?)?(\w+)?(\w+\s\d+\w\s?)*)(?P<end_date>\d{4}-\d{2}-\d{2})?\]$'
+			meta_index = re.search(TASK_META_MATCH_REGEX, task)
 			if meta_index:
 				description = task[2:meta_index.start()]
 			else:
@@ -85,7 +33,7 @@ class Task(object):
 			return description.strip()
 
 		self._raw = raw 
-		(self._meta, self._raw_meta) = extract_meta(raw)
+		self._meta, self._raw_meta = extract_task_metadata(raw)
 		self._description = extract_description(raw)
 		self._scheduled_start_datetime = None
 		self._scheduled_end_datetime = None
@@ -194,7 +142,8 @@ class Task(object):
 		if category == 'All':
 			# Take largest urgency from all categories
 			# Use overall 
-			return urgency_normalizer(max([self.get_slots_for_category(cat)[0].date for cat in self.meta.categories.keys()]))
+			cats_deadlines = [self.get_slots_for_category(cat)[0].date for cat in self.meta.categories.keys()]
+			return urgency_normalizer(max(cats_deadlines))
 		elif not self.has_category(category):
 			return 0 # just in case
 		else:
@@ -430,9 +379,7 @@ class CategorySchedule(object):
 	# Place all remaining tasks in order from beginning till the end	
 
 
-def mean(values):
-	if len(values) == 0: return None
-	return sum(values) / len(values)
+
 
 class Statistics(object):
 	"""Statistics(sections)"""

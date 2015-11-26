@@ -1,5 +1,7 @@
 from datetime import timedelta, datetime, date
 from operator import attrgetter, methodcaller, itemgetter
+import re
+from collections import namedtuple
 
 def sparkline(values, smallest=-1, largest=-1):
 	if len(values) == 0:
@@ -72,3 +74,65 @@ def human_duration(total_duration, duration_categories_map, max_segments=5):
 		human_time = ' '.join(human_time.split(' ')[:max_segments])
 
 	return human_time
+
+def mean(values):
+	if len(values) == 0: return None
+	return sum(values) / len(values)
+
+
+def has_optional_flag(string):
+	return string is not None and "M" in string
+
+def extract_categories(string):
+	CATEGORY_REGEX = '(?P<cat>\w{3,})?\s?(?P<duration>\d+(h|d|w|m|q))?'
+
+	categories = {}
+
+	for match in re.finditer(CATEGORY_REGEX, string):
+		if not (match.group('duration') is None and match.group('cat') is None):
+
+			cat = str(match.group('cat'))
+			categories[cat] = {}
+			if match.group('duration'):
+				dur = int(match.group('duration')[:-1])
+				unit = match.group('duration')[-1]
+			else:
+				dur = None
+				unit = None
+
+			categories[cat]['duration_value'] = dur,
+			categories[cat]['duration_unit'] = unit
+
+	return categories
+
+def parse_end_date(str):
+	DATE_FORMAT = '%Y-%m-%d'
+	return datetime.strptime(str, DATE_FORMAT) if str else None
+
+def extract_task_metadata(task):
+	TASK_META_MATCH_REGEX = '\[(?P<flags>M)?\s?(?P<categories>(\d+\w\s?)?(\w+)?(\w+\s\d+\w\s?)*)(?P<end_date>\d{4}-\d{2}-\d{2})?\]$'
+
+	TaskMeta = namedtuple('TaskMeta', ['optional', 'categories', 'end_date'])
+	matches = re.search(TASK_META_MATCH_REGEX, task)
+
+	if matches:
+
+		optional = has_optional_flag(matches.group('flags'))
+		categories = extract_categories(matches.group('categories'))
+		end_date = parse_end_date(matches.group('end_date'))
+
+		meta = TaskMeta(
+			optional,
+			categories,
+			end_date
+		)
+		raw_meta = matches.group(0)
+	else:
+		raw_meta = ""
+		categories = {}
+		categories['None'] = {}
+		categories['None']['duration_value'] = None,
+		categories['None']['duration_unit'] = None
+		meta = TaskMeta(False, categories, None)
+
+	return (meta, raw_meta)

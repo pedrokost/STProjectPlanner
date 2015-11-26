@@ -521,12 +521,14 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 	def run(self, edit):		
 		content=self.view.substr(sublime.Region(0, self.view.size()))
 		sections = self._extract_sections(content)
+		
 		statistics = self._compute_statistics(sections)
 		self._estimate_missing_data(sections, statistics)
 		self._compute_schedule(sections, statistics)
 
 		self._mark_date_completed(sections, edit)
 		self._update_section_timings(sections, edit, statistics)
+
 		self._update_upcoming_tasks(sections, edit, statistics)
 		self._update_planned_effort(sections, edit, statistics)
 		self._draw_weekly_schedule(sections, edit, statistics)

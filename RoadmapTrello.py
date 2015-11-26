@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib
 import trollop
 import sublime_requests as requests
 from .roadmap_compiler_models import Task, Section, CategorySchedule, Statistics, DaySlot, human_duration
-
+from .utils import extract_task_metadata
 
 def plugin_loaded():
 	if not os.path.exists(sublime.packages_path()+"/User/roadmap_trello.sublime-settings"):
@@ -226,7 +226,8 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 	def __compute_checkitem_duration(self, item):
 		DEFAULT_CATEGORY_DURATION = 8
 
-		meta = extract_meta(item._data['name'])
+		# meta = extract_meta(item._data['name'])
+		meta = extract_task_metadata(item._data['name'])[0]
 
 		resp = {}
 
@@ -310,7 +311,7 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 			card_duration_human += '{} {} '.format(category, human_duration(dur.value, Section.DURATION_MAP, max_segments=1))
 
 		card_duration_human = card_duration_human.strip()
-		deadline = extract_meta(task).end_date
+		deadline = extract_task_metadata(task)[0].end_date
 
 		if deadline:
 			new_meta = '[{} {}]'.format(card_duration_human, deadline.strftime("%Y-%m-%d"))
