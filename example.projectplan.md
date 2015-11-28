@@ -1,11 +1,4 @@
-# Roadmap
-
-Last updated: 2015-11-28
-
-### Upcoming tasks
-
-- Learn sums [Math 1w]
-- Read biology book [Bio 1m]
+logy book [Bio 1m]
 - Study portuguese [Por 2d]
 - Pick a book to start learning Japanese [Jap 1d]
 - Learn to draw boxes [Art 3w]
@@ -45,9 +38,9 @@ Last updated: 2015-11-28
 ### Total estimated effort
 
 ```
-Math  2m 1w ##############################
+Math  2m 3d ##############################
  Bio  1m 1w #################
- Art     1m #########
+ Art     2w ######
  Por     2d #
  Jap     1d 
 ```
@@ -59,7 +52,7 @@ Math  2m 1w ##############################
 2015W48                                     
 2015W49  |||||  |||||  |      |||||  ||     
 2015W50  |||||  |||||         |||||         
-2015W51  |||||  |||||         |||||         
+2015W51         |||||         |||||         
 2015W52         |||||         |||||         
 2015W53         |             |||||         
 2016W01                       |||||         
@@ -73,11 +66,11 @@ Math  2m 1w ##############################
 ```
 School stuff                                  ▁▇▆▆▆▄▃▁▁▁▁▁▁▂▃▁▁▁▃▁▁▁▁▁▁▁▁▁▁▁
 Japanese                                      ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
-Side projects                                 ▁▃▃▃▁▁▁▃▃▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+Side projects                                 ▁▃▃▁▁▁▁▃▃▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
 ```
 
 ## School stuff (2x)
-[9 tasks, 3m 4h (Math 2m 4h, Bio 1m 1w, Por 2d)]
+[9 tasks, 3m 4h (Math 1m 2w, Bio 1m 1w, Por 2d)]
 ⌚▁▇▆▆▆▄▃▁▁▁▁▁▁▂▃▁▁▁▃▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
 
 - Learn sums [Math 1w]
@@ -98,9 +91,9 @@ Side projects                                 ▁▃▃▃▁▁▁▃▃▁▁�
 - Pick a book to start learning Japanese [Jap 1d]
 
 ## Side projects
-[2 tasks, 1m 1w (Art 1m, Math 2w)]
-⌚▁▇▇▇▁▁▁▆▇▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+[2 tasks, 4w (Math 2w, Art 2w)]
+⌚▁▇▇▁▁▁▁▆▇▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
 
-- Make the world a better place [M]
-- Learn to draw boxes [Art 3w]
+- Make the world a better place [M Art 2w]
+- Learn to draw boxes [Art 2w]
 - Learn about complex numbers [Math 2w]
