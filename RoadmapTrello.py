@@ -14,7 +14,7 @@ from .utils import extract_task_metadata
 
 def plugin_loaded():
 	if not os.path.exists(sublime.packages_path()+"/User/roadmap_trello.sublime-settings"):
-		print(sublime.packages_path())
+		# print(sublime.packages_path())
 		shutil.copyfile(sublime.packages_path()+"/RoadmapCompile/roadmap_trello.sublime-settings", sublime.packages_path()+"/User/roadmap_trello.sublime-settings")
 
 class RoadmapTrello(sublime_plugin.TextCommand):
@@ -267,8 +267,10 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 
 		if deadline:
 			new_meta = '[{} {}]'.format(card_duration_human, deadline.strftime("%Y-%m-%d"))
-		else:
+		elif card_duration_human:
 			new_meta = '[{}]'.format(card_duration_human)
+		else:
+			new_meta = ''
 
 		section_pos = self.view.find(section_title, 0, sublime.LITERAL)
 		task_pos = self.view.find(task, section_pos.end(), sublime.LITERAL)
@@ -349,7 +351,8 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 
 	def warn_incorrect_list_order(self, lists, sections):
 		list_titles = [list._data['name'] for list in lists]
-		section_titles = [section.title[3:] for section in sections]
+		section_titles = [section.title[3:] for section in sections if section.is_valid]
+		print(section_titles)
 
 		indices = []
 		for list_title in list_titles:
@@ -422,4 +425,3 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 		self.mark_completed(sections, edit, done_lists)
 		self.display_errors(edit)
 		self.update_last_update(edit)
-

@@ -202,7 +202,10 @@ class Section(object):
 
 	@property
 	def title(self):
-		return self.lines[0]
+		title = self.lines[0]
+		if re.search('\(.+\)', title):
+			title = re.search('(?P<title>.+)(\s?\(.+\))', title).group('title').strip()
+		return title
 
 	@property
 	def weight(self):
