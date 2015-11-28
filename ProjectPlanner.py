@@ -5,18 +5,19 @@ import operator
 from operator import attrgetter, methodcaller, itemgetter
 from time import gmtime, strftime
 import sublime, sublime_plugin
-from .roadmap_compiler_models import Task, Section, CategorySchedule, Statistics, DaySlot
-from .roadmap_compiler_models import human_duration
+from .models import Task, Section, CategorySchedule, Statistics, DaySlot
+from .models import human_duration
 from .utils import sparkline, truncate_middle, weeknumber, fmtweek
 from .utils import next_available_weekday, human_duration, weighted_sampling_without_replacement
 import random
 
-def plugin_loaded():
-	if not os.path.exists(sublime.packages_path()+"/User/roadmap_compile.sublime-settings"):
-		# print(sublime.packages_path())
-		shutil.copyfile(sublime.packages_path()+"/RoadmapCompile/roadmap_compile.sublime-settings", sublime.packages_path()+"/User/roadmap_compile.sublime-settings")
 
-class RoadmapCompile(sublime_plugin.TextCommand):
+def plugin_loaded():
+	if not os.path.exists(sublime.packages_path()+"/User/project_planner.sublime-settings"):
+		# print(sublime.packages_path())
+		shutil.copyfile(sublime.packages_path()+"/ProjectPlanner/project_planner.sublime-settings", sublime.packages_path()+"/User/project_planner.sublime-settings")
+
+class ProjectPlannerCompile(sublime_plugin.TextCommand):
 	HEADING_IDENTIFIER = '#'
 	SECTION_IDENTIFIER = '## '
 	INVALID_SECTIONS = [

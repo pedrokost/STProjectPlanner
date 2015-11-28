@@ -1,0 +1,7 @@
+[
+    { "caption": "Project Planner: Sync with Trello", "command": "project_planner_trello" },
+    { "caption": "Preferences: Project Planner Settings - User",
+        "command": "open_file",
+        "args": {"file": "${packages}/User/project_planner.sublime-settings"}
+    }
+]

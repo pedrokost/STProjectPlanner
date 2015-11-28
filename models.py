@@ -23,7 +23,7 @@ class Task(object):
 	def __init__(self, raw, section):
 		
 		def extract_description(task):
-			TASK_META_MATCH_REGEX = '\[(?P<flags>M)?\s?(?P<categories>(\d+\w\s?)?(\w+)?(\w+\s\d+\w\s?)*)(?P<end_date>\d{4}-\d{2}-\d{2})?\]$'
+			TASK_META_MATCH_REGEX = '\[(?P<flags>M\s?)?(?P<categories>(\d+\w\s?)?(\w+)?(\w+\s\d+\w\s?)*)(?P<end_date>\d{4}-\d{2}-\d{2})?\]$'
 			meta_index = re.search(TASK_META_MATCH_REGEX, task)
 			if meta_index:
 				description = task[2:meta_index.start()]
@@ -423,7 +423,7 @@ class Statistics(object):
 		return sorted(list(set(all_categories)))
 
 	def max_load_for_category(self, category):
-		conf = sublime.load_settings('roadmap_compile.sublime-settings')
+		conf = sublime.load_settings('project_planner.sublime-settings')
 		default_workload = conf.get('default_daily_category_workload')
 		overrides = conf.get("category_workloads", [])
 

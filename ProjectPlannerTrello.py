@@ -10,15 +10,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib
 
 import trollop
 import sublime_requests as requests
-from .roadmap_compiler_models import Task, Section, CategorySchedule, Statistics, DaySlot, human_duration
+from .models import Task, Section, CategorySchedule, Statistics, DaySlot, human_duration
 from .utils import extract_task_metadata
 
-def plugin_loaded():
-	if not os.path.exists(sublime.packages_path()+"/User/roadmap_trello.sublime-settings"):
-		# print(sublime.packages_path())
-		shutil.copyfile(sublime.packages_path()+"/RoadmapCompile/roadmap_trello.sublime-settings", sublime.packages_path()+"/User/roadmap_trello.sublime-settings")
-
-class RoadmapTrello(sublime_plugin.TextCommand):
+class ProjectPlannerTrello(sublime_plugin.TextCommand):
 	"""
 	https://github.com/sarumont/py-trello
 	"""
@@ -28,13 +23,12 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 	INVALID_SECTIONS = [
 		'## Summary',
 		'## Effort planning',
-		'## Trello warnings',
-		'## Trello warnings ON',
+		'## Trello warnings'
 	]
 
 	def run(self, edit):
 		print('Trello plugin run')
-		conf = sublime.load_settings('roadmap_trello.sublime-settings')
+		conf = sublime.load_settings('project_planner.sublime-settings')
 		self.key = conf.get('TRELLO_API_KEY')
 		self.token = conf.get("TRELLO_TOKEN")
 		self.board_id = conf.get("TRELLO_TEST_BOARD_ID")
@@ -55,7 +49,7 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 		print("It seems your token is invalid or has expired, try adding it again.\nToken URL: %s" % self.token_url(), "The error encountered was: '%s'" % e)
 
 	def token_url(self):
-		return "https://trello.com/1/connect?key=%s&name=roadmap_trello&response_type=token&scope=read,write" % self.key
+		return "https://trello.com/1/connect?key=%s&name=project_planner&response_type=token&scope=read,write" % self.key
 
 
 	def list_exists(self, list):
@@ -404,11 +398,6 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 
 		if self.debug:
 			print("DEBUG MODE IS ON")
-
-		heading_region = self.view.find('^## Trello warnings', 0)
-		if heading_region:
-			if not 'ON' in self.view.substr(self.view.line(heading_region)):
-				return
 
 		content=self.view.substr(sublime.Region(0, self.view.size()))
 		sections = self.__extract_sections(content)

@@ -110,7 +110,7 @@ def parse_end_date(str):
 	return datetime.strptime(str, DATE_FORMAT) if str else None
 
 def extract_task_metadata(task):
-	TASK_META_MATCH_REGEX = '\[(?P<flags>M)?\s?(?P<categories>(\d+\w\s?)?(\w+)?(\w+\s\d+\w\s?)*)(?P<end_date>\d{4}-\d{2}-\d{2})?\]$'
+	TASK_META_MATCH_REGEX = '\[((?P<flags>M)(\]|\s))?(?P<categories>(\d+\w\s?)?(\w+)?(\w+\s\d+\w\s?)*)(?P<end_date>\d{4}-\d{2}-\d{2})?\]$'
 
 	TaskMeta = namedtuple('TaskMeta', ['optional', 'categories', 'end_date'])
 	matches = re.search(TASK_META_MATCH_REGEX, task)

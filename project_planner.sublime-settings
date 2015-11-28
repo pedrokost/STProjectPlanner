@@ -1,0 +1,11 @@
+{
+    "default_daily_category_workload": 8,
+    "category_workloads": [],
+    "TRELLO_API_KEY": "",
+    "TRELLO_API_SECRET": "",
+    "TRELLO_TOKEN": "",
+    "TRELLO_TEST_BOARD_ID": "",
+    "SKIP_LISTS": [],
+    "SKIP_CHECKLISTS": [],
+    "DONE_LISTS": []
+}
