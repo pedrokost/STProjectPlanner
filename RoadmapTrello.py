@@ -27,6 +27,8 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 	INVALID_SECTIONS = [
 		'## Summary',
 		'## Effort planning',
+		'## Trello warnings',
+		'## Trello warnings ON',
 	]
 
 	def run(self, edit):
@@ -36,6 +38,7 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 		self.token = conf.get("TRELLO_TOKEN")
 		self.board_id = conf.get("TRELLO_TEST_BOARD_ID")
 		self.skip_lists = conf.get("SKIP_LISTS")
+		self.done_lists = conf.get("DONE_LISTS")
 		self.skip_checklists = conf.get("SKIP_CHECKLISTS")
 		self.debug = False
 
@@ -176,7 +179,6 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 	def __compute_checkitem_duration(self, item):
 		DEFAULT_CATEGORY_DURATION = 8
 
-		# meta = extract_meta(item._data['name'])
 		meta = extract_task_metadata(item._data['name'])[0]
 
 		resp = {}
@@ -361,6 +363,30 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 				if indices[index_idx - 1] > index:
 					self.add_error('List ordering', '*{}* should be placed before *{}*'.format(list_titles[index_idx-1], list_titles[index_idx]))
 
+	def mark_completed(self, sections, edit, done_lists):
+		"""
+		Mark as completed each card in the DONE list
+		"""
+
+		def find_in_section(card, section_title):
+			title_idx = self.view.find(section_title, 0)
+			next_section = self.next_section_start(title_idx.end())
+			card_idx = self.view.find(card.url, title_idx.end())
+			if card_idx.end() > 0 and card_idx.end() < next_section:
+				return self.view.line(card_idx.begin())
+			else:
+				return None
+
+		completed_cards = [card for list in done_lists for card in list.cards]
+		section_titles = [section.title for section in sections if section.is_valid]
+		for section_title in section_titles:
+			for completed_card in completed_cards:
+				card_line = find_in_section(completed_card, section_title)
+				if card_line:
+				 	replace_region = sublime.Region(card_line.begin(), card_line.begin() + 1)
+				 	self.view.replace(edit, replace_region, '+')
+
+
 	def safe_work(self, connection, edit):
 
 		self.errors = []
@@ -386,12 +412,14 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 
 		board = connection.get_board(self.board_id)
 		lists = [list for list in board.lists if list.name not in self.skip_lists]
+		done_lists = [list for list in board.lists if list.name in self.done_lists]
 		matches = self.find_matching_sections(lists, sections)
 
 		self.list_missing_lists(connection, edit)
 		self.warn_incorrect_list_order(lists, sections)
 		self.add_missing_cards(connection, edit, matches)
 		self.update_cards_metadata(connection, edit, matches)
-		self.update_last_update(edit)
+		self.mark_completed(sections, edit, done_lists)
 		self.display_errors(edit)
+		self.update_last_update(edit)
 
