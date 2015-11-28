@@ -101,7 +101,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 					self.view.replace(edit, sublime.Region(line.begin(), next_line.end()), content)
 				else:
 					content = '\n' + section.summary + '\n' + SPARK_START + spark
-					line = self.view.find(section.lines[0], last_point)
+					line = self.view.find(section.lines[0], last_point, sublime.LITERAL)
 					self.view.insert(edit, line.end(), content)
 				last_point = line.end()
 

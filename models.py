@@ -266,7 +266,8 @@ class Section(object):
 
 		categ_durations = {}
 
-		for task in self.tasks:
+		mandatory_tasks = [task for task in self.tasks if task.is_mandatory]
+		for task in mandatory_tasks:
 			categories = task.categories()
 			for category in task.categories():
 				total_duration += task.category_duration(category)

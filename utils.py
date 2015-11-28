@@ -63,11 +63,11 @@ def human_duration(total_duration, duration_categories_map, max_segments=5):
 	duration_categories = [d[0] for d in duration_categories]
 
 	for duration_cat in duration_categories:
-		groupped_duration[duration_cat] = int(round(total_duration / duration_categories_map[duration_cat]))
+		# groupped_duration[duration_cat] = int(round(total_duration / duration_categories_map[duration_cat]))
+		groupped_duration[duration_cat] = total_duration // duration_categories_map[duration_cat]
 		total_duration -= groupped_duration[duration_cat] * duration_categories_map[duration_cat]
 
 	human_time = ' '.join(["%d%s" % (groupped_duration[cat], cat) for cat in duration_categories if groupped_duration[cat] > 0])
-
 
 	# Cro out low precision (this should be smarte rounding)
 	if max_segments < len(human_time.split(' ')):
