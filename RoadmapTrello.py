@@ -17,56 +17,6 @@ def plugin_loaded():
 		print(sublime.packages_path())
 		shutil.copyfile(sublime.packages_path()+"/RoadmapCompile/roadmap_trello.sublime-settings", sublime.packages_path()+"/User/roadmap_trello.sublime-settings")
 
-def extract_meta(task):
-	# TODO: extract into utility function
-
-	TASK_META_REGEX = '\[(?P<category1>\w{3})?\s?(?:(?P<duration_value1>\d{1,})(?P<duration_unit1>h|d|w|m|q))?\s?(?P<category2>\w{3})?\s?(?:(?P<duration_value2>\d{1,})(?P<duration_unit2>h|d|w|m|q))?\s?(?P<category3>\w{3})?\s?(?:(?P<duration_value3>\d{1,})(?P<duration_unit3>h|d|w|m|q))?\s?(?P<category4>\w{3})?\s?(?:(?P<duration_value4>\d{1,})(?P<duration_unit4>h|d|w|m|q))?\s?(?P<end_date>\d{4}-\d{2}-\d{2}.*)?\]$'
-	DATE_FORMAT = '%Y-%m-%d'
-
-
-	TaskMeta = namedtuple('TaskMeta', ['categories', 'end_date'])
-
-	matches = re.search(TASK_META_REGEX, task)
-
-
-	if matches:
-		categories = {}
-		if matches.group('category1'):
-			categories[matches.group('category1')] = {}
-			categories[matches.group('category1')]['duration_value'] = int(matches.group('duration_value1')) if matches.group('duration_value1') else None,
-			categories[matches.group('category1')]['duration_unit'] = matches.group('duration_unit1')
-		else:
-			categories['None'] = {}
-			categories['None']['duration_value'] = int(matches.group('duration_value1')) if matches.group('duration_value1') else None,
-			categories['None']['duration_unit'] = matches.group('duration_unit1')
-		if matches.group('category2'):
-			categories[matches.group('category2')] = {}
-			categories[matches.group('category2')]['duration_value'] = int(matches.group('duration_value2')) if matches.group('duration_value2') else None,
-			categories[matches.group('category2')]['duration_unit'] = matches.group('duration_unit2')
-		if matches.group('category3'):
-			categories[matches.group('category3')] = {}
-			categories[matches.group('category3')]['duration_value'] = int(matches.group('duration_value3')) if matches.group('duration_value3') else None,
-			categories[matches.group('category3')]['duration_unit'] = matches.group('duration_unit3')
-		if matches.group('category4'):
-			categories[matches.group('category4')] = {}
-			categories[matches.group('category4')]['duration_value'] = int(matches.group('duration_value4')) if matches.group('duration_value4') else None,
-			categories[matches.group('category4')]['duration_unit'] = matches.group('duration_unit4')
-
-		meta = TaskMeta(
-			categories,
-			datetime.strptime(matches.group('end_date'), DATE_FORMAT) if matches.group('end_date') else None
-		)
-		raw_meta = matches.group(0)
-	else:
-		raw_meta = ""
-		categories = {}
-		categories['None'] = {}
-		categories['None']['duration_value'] = None,
-		categories['None']['duration_unit'] = None
-		meta = TaskMeta(categories, None)
-
-	return meta
-
 class RoadmapTrello(sublime_plugin.TextCommand):
 	"""
 	https://github.com/sarumont/py-trello
