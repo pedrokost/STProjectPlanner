@@ -39,6 +39,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 
 		return indices
 
+
 	def _extract_sections(self, content):
 
 		array = content.split('\n')
@@ -546,7 +547,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 
 	def _update_timestamp(self, edit):
 
-		heading_region = self.view.find('^# Roadmap', 0)
+		heading_region = self.view.find('^# ', 0)
 		if heading_region.begin() == -1:
 			return
 
@@ -560,7 +561,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 	def run(self, edit):
 
 		self.myrandomseed = 4567
-
+		
 		content=self.view.substr(sublime.Region(0, self.view.size()))
 		sections = self._extract_sections(content)
 		
