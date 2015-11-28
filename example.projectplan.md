@@ -4,11 +4,16 @@ Last updated: 2015-11-28
 
 ### Upcoming tasks
 
+- Learn sums [Math 1w]
 - Read biology book [Bio 1m]
 - Study portuguese [Por 2d]
 - Pick a book to start learning Japanese [Jap 1d]
 - Learn to draw boxes [Art 3w]
-- Prepare for biology midterm [Bio 1w 2016-03-02]
+- Learn calculus [Math 3w]
+- Study for exam for sums [Math 1d 2015-12-14]
+- Study for exam for calculus [Math 3d 2015-12-17]
+- Learn linear algebra [Math]
+- Learn about complex numbers [Math 2w]
 
 ### Art upcoming tasks
 
@@ -23,6 +28,14 @@ Last updated: 2015-11-28
 
 - Pick a book to start learning Japanese [Jap 1d]
 
+### Math upcoming tasks
+
+- Learn sums [Math 1w]
+- Learn calculus [Math 3w]
+- Study for exam for sums [Math 1d 2015-12-14]
+- Study for exam for calculus [Math 3d 2015-12-17]
+- Learn linear algebra [Math]
+
 ### Por upcoming tasks
 
 - Study portuguese [Por 2d]
@@ -32,34 +45,35 @@ Last updated: 2015-11-28
 ### Total estimated effort
 
 ```
-Bio  1m 1w #############################
-Art     1m #################
-Por     2d ##
-Jap     1d #
+Math  2m 1w ##############################
+ Bio  1m 1w #################
+ Art     1m #########
+ Por     2d #
+ Jap     1d 
 ```
 
 ### Weekly effort timeline
 
 ```
-         Art    Bio    Jap    Por    
-2015W48                              
-2015W49  |||||  |||||  |      ||     
-2015W50  |||||  |||||                
-2015W51  |||||  |||||                
-2015W52         |||||                
-2015W53         |                    
-2016W01                              
-2016W02                              
-2016W03                              
-2016W04                              
+         Art    Bio    Jap    Math   Por    
+2015W48                                     
+2015W49  |||||  |||||  |      |||||  ||     
+2015W50  |||||  |||||         |||||         
+2015W51  |||||  |||||         |||||         
+2015W52         |||||         |||||         
+2015W53         |             |||||         
+2016W01                       |||||         
+2016W02                       |||||         
+2016W03                       |||||         
+2016W04                                     
 ```
 
 ### Section schedule to scale
 
 ```
-School stuff                                  ▁▇▅▅▅▂▁▁▁▁▁▁▁▃▄▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
-Japanese                                      ▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
-Side projects                                 ▁▅▅▅▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+School stuff                                  ▁▇▆▆▆▄▃▁▁▁▁▁▁▂▃▁▁▁▃▁▁▁▁▁▁▁▁▁▁▁
+Japanese                                      ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+Side projects                                 ▁▃▃▃▁▁▁▃▃▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
 ```
 
 ## School stuff (2x)
@@ -74,7 +88,7 @@ Side projects                                 ▁▅▅▅▁▁▁▁▁▁▁�
 - Read biology book [Bio 1m]
 - Prepare for biology midterm [Bio 1w 2016-03-02]
 - Study for exam for linear algebra [Math 1w 2016-04-01]
-- Learn about vertex machines [M Math]
+- Learn about vertex machines [M]
 - Study portuguese [Por 2d]
 
 ## Japanese
@@ -84,18 +98,9 @@ Side projects                                 ▁▅▅▅▁▁▁▁▁▁▁�
 - Pick a book to start learning Japanese [Jap 1d]
 
 ## Side projects
-[3 tasks, 1m 1w (Art 1m, Math 2w)]
+[2 tasks, 1m 1w (Art 1m, Math 2w)]
 ⌚▁▇▇▇▁▁▁▆▇▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
 
 - Make the world a better place [M]
 - Learn to draw boxes [Art 3w]
 - Learn about complex numbers [Math 2w]
-
-## Trello warnings
-
-Last synced: 2015-11-28 16:54
-
-### Errors
-
-### Missing lists
-
