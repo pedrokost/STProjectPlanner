@@ -13,7 +13,7 @@ import random
 
 def plugin_loaded():
 	if not os.path.exists(sublime.packages_path()+"/User/roadmap_compile.sublime-settings"):
-		print(sublime.packages_path())
+		# print(sublime.packages_path())
 		shutil.copyfile(sublime.packages_path()+"/RoadmapCompile/roadmap_compile.sublime-settings", sublime.packages_path()+"/User/roadmap_compile.sublime-settings")
 
 class RoadmapCompile(sublime_plugin.TextCommand):
@@ -121,10 +121,6 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 			return
 
 		def upcoming_cat_task_group_content(task_group, num_tasks, category):
-			# print(category)
-			# if category == 'All':
-			# 	print (task_group.tasks)
-
 			sorted_tasks = sorted(task_group.tasks, key=methodcaller('category_urgency', category))
 
 			sorted_tasks_string = '\n\n### ' + task_group.title + ' upcoming tasks\n\n' if task_group.show_title else ''
@@ -141,7 +137,7 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 
 		UpcomingTaskGroup = namedtuple('UpcomingTaskGroup', ['title', 'tasks', 'show_title'])
 
-		all_tasks = [task for tasks in nested_tasks for task in tasks]
+		all_tasks = [task for tasks in nested_tasks for task in tasks if task.is_mandatory]
 		upcoming_task_groups = [
 			UpcomingTaskGroup(
 				show_title = False,
