@@ -239,10 +239,13 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 			incomplete_items += its
 
 		# Filter out cards with the "M"-aybe flag
+		optional_items = []
 		schedulable_items = []
 		for item in incomplete_items:
 			if not '[M ' in item._data['name'] and not '[M]' in item._data['name']:
 				schedulable_items.append(item)
+			else:
+				optional_items.append(item)
 
 		# print('Kept {} sure items from a total of {}'.format(len(schedulable_items), len(incomplete_items)))
 
@@ -269,6 +272,8 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 			new_meta = '[{} {}]'.format(card_duration_human, deadline.strftime("%Y-%m-%d"))
 		elif card_duration_human:
 			new_meta = '[{}]'.format(card_duration_human)
+		elif len(optional_items) > 0:
+			new_meta = '[M]'
 		else:
 			new_meta = ''
 
@@ -352,7 +357,6 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 	def warn_incorrect_list_order(self, lists, sections):
 		list_titles = [list._data['name'] for list in lists]
 		section_titles = [section.title[3:] for section in sections if section.is_valid]
-		print(section_titles)
 
 		indices = []
 		for list_title in list_titles:
@@ -393,13 +397,6 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 	def safe_work(self, connection, edit):
 
 		self.errors = []
-		# self.errors = [{
-		# 	'category': 'Archived cards',
-		# 	'errors': ['ab2', 'aarstras', 'arstras']
-		# }, {
-		# 	'category': 'Missing lists',
-		# 	'errors': ['bla bla']
-		# }]
 		self.debug = False
 
 		if self.debug:
