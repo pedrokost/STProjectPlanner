@@ -197,7 +197,7 @@ class Section(object):
 		all_tasks = [Task(raw_task, self) for raw_task in self.raw_tasks if self.is_valid]
 		self._tasks = [task for task in all_tasks if task.is_mandatory]
 		weight_regex = '\((?P<weight>\d+(\.\d+)?)x\)'
-		priority_match = re.search(weight_regex, self.title)
+		priority_match = re.search(weight_regex, self.lines[0])
 		self._weight = float(priority_match.group('weight')) if priority_match else 1
 
 	@property
