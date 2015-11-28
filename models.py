@@ -229,7 +229,7 @@ class Section(object):
 
 	@property
 	def summary(self):
-		return "[%d tasks, %s]" % (self.num_tasks, self.smart_duration)
+		return "[%d tasks, %s]" % (self.num_mandatory_tasks, self.smart_duration)
 
 	@property
 	def smart_duration(self):
@@ -277,7 +277,7 @@ class Section(object):
 		return (total_duration, untagged_with_duration, categ_durations)
 
 	def __str__(self):
-		return "<Section '%s', %d items, valid:%s>" % (self.title, self.num_tasks, self.is_valid)
+		return "<Section '%s', %d items, valid:%s>" % (self.title, self.num_mandatory_tasks, self.is_valid)
 
 	def __repr__(self):
 		return str(self)
@@ -287,6 +287,12 @@ class Section(object):
 		# Counts lines starting with Task delimeter
 		if not self.is_valid: return 0
 		return len(self.tasks)
+
+	@property
+	def num_mandatory_tasks(self):
+		# Counts lines starting with Task delimeter
+		if not self.is_valid: return 0
+		return len([task for task in self.tasks if task.is_mandatory])
 
 	def __lt__(self, other):
 		return self.title < other.title
