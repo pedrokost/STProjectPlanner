@@ -1,6 +1,7 @@
 import sublime, sublime_plugin
 from subprocess import call
 import os, shutil, sys, re
+from operator import attrgetter
 from datetime import datetime, date
 from collections import namedtuple, Counter
 
@@ -252,6 +253,8 @@ class RoadmapTrello(sublime_plugin.TextCommand):
 		card_name = card.name
 		card_durations = self.__compute_card_duration(schedulable_items, Section.DURATION_MAP, len(checklists), task)
 		card_duration_human = ''
+
+		card_durations = sorted(card_durations, key=attrgetter('value'), reverse=True)
 
 		# Ensure None is the first category in the pipeline
 		# Then I don't need to print it anymore, making my compiler smarter
