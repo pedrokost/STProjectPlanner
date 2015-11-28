@@ -136,3 +136,15 @@ def extract_task_metadata(task):
 		meta = TaskMeta(False, categories, None)
 
 	return (meta, raw_meta)
+
+
+def weighted_sampling_without_replacement(l, n, myrandom=None):
+	"""Selects without replacement n random elements from a list of (weight, item) tuples."""
+
+	if myrandom:
+		l = sorted((myrandom.random() * x[0], x[1]) for x in l)
+	else:
+		import random
+		l = sorted((random.random() * x[0], x[1]) for x in l)
+
+	return l[-n:]

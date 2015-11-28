@@ -20,7 +20,7 @@ class Task(object):
 
 	DATE_FORMAT = '%Y-%m-%d'
 
-	def __init__(self, raw):
+	def __init__(self, raw, section):
 		
 		def extract_description(task):
 			TASK_META_MATCH_REGEX = '\[(?P<flags>M)?\s?(?P<categories>(\d+\w\s?)?(\w+)?(\w+\s\d+\w\s?)*)(?P<end_date>\d{4}-\d{2}-\d{2})?\]$'
@@ -39,6 +39,11 @@ class Task(object):
 		self._scheduled_end_datetime = None
 		self._fake_duration = {}
 		self.slots = {}
+		self._section = section
+
+	@property
+	def section(self):
+	    return self._section
 
 	def set_slots_for_category(self, category, slots):
 		self.slots[category] = slots
@@ -189,12 +194,19 @@ class Section(object):
 		self._is_valid = is_valid
 		self._row_at = row_at
 
-		all_tasks = [Task(raw_task) for raw_task in self.raw_tasks if self.is_valid]
+		all_tasks = [Task(raw_task, self) for raw_task in self.raw_tasks if self.is_valid]
 		self._tasks = [task for task in all_tasks if task.is_mandatory]
+		weight_regex = '\((?P<weight>\d+(\.\d+)?)x\)'
+		priority_match = re.search(weight_regex, self.title)
+		self._weight = float(priority_match.group('weight')) if priority_match else 1
 
 	@property
 	def title(self):
 		return self.lines[0]
+
+	@property
+	def weight(self):
+	    return self._weight
 
 	@property
 	def lines(self):
@@ -272,6 +284,9 @@ class Section(object):
 		# Counts lines starting with Task delimeter
 		if not self.is_valid: return 0
 		return len(self.tasks)
+
+	def __lt__(self, other):
+		return self.title < other.title
 
 class CategorySchedule(object):
 	"""Schedule(tasks)"""

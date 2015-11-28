@@ -8,7 +8,8 @@ import sublime, sublime_plugin
 from .roadmap_compiler_models import Task, Section, CategorySchedule, Statistics, DaySlot
 from .roadmap_compiler_models import human_duration
 from .utils import sparkline, truncate_middle, weeknumber, fmtweek
-from .utils import next_available_weekday, human_duration
+from .utils import next_available_weekday, human_duration, weighted_sampling_without_replacement
+import random
 
 def plugin_loaded():
 	if not os.path.exists(sublime.packages_path()+"/User/roadmap_compile.sublime-settings"):
@@ -112,17 +113,12 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 		UPCOMING_TASKS_SECTION_REGEX = '### (\d+\s)?[Uu]pcoming tasks'
 		SHOW_TASKS_BY_CATEGORY = True
 
+		sections = [section for section in sections if section.weight > 0]
+
 		index_section = self.view.find(UPCOMING_TASKS_SECTION_REGEX, 0)
 		if index_section.begin() == -1:
 			# Upcoming tasks section is not wanted. Stop.
 			return
-
-		# def upcoming_task_group_content(task_group, num_tasks):
-		# 	sorted_tasks = sorted(task_group.tasks, key=attrgetter('urgency'))
-		# 	sorted_tasks_string = '\n\n### ' + task_group.title + ' upcoming tasks\n\n' if task_group.show_title else ''
-		# 	sorted_tasks_string += '\n'.join([str(task) for task in sorted_tasks[:num_tasks]])
-		# 	return sorted_tasks_string
-
 
 		def upcoming_cat_task_group_content(task_group, num_tasks, category):
 			# print(category)
@@ -332,6 +328,51 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 
 		return first_available_date
 
+
+	def _prioritize_tasks(self, tasks_wout_deadline, stats):
+		"""
+		reoader tasks_wout_deadline based on the section probabilitisc
+		weights
+		"""
+
+		def adjusted_section_weights(sections, section_countdown):
+			weights = []
+			for section in sections:
+				weight = section.weight if section_countdown[section.title] > 0 else 0
+				weights.append((weight, section))
+			return weights
+
+		sections = set([task.section for task in tasks_wout_deadline])
+		sections = sorted(list(sections)) # order the set, for limited randomness
+
+		section_tasks = {}
+		section_countdown = {}
+		# tot_tasks = 0
+		for section in sections:
+			section_tasks[section.title] = [task for task in section.tasks if task.is_mandatory and task in tasks_wout_deadline]
+			section_countdown[section.title] = len(section_tasks[section.title])
+			# tot_tasks += len(section_tasks[section.title])
+		# assert(len(tasks_wout_deadline) == tot_tasks)
+		prioritized_tasks = []
+		weighted_sections = adjusted_section_weights(sections, section_countdown)
+			
+		def get_next_task_in_section(section, rem_tsks, section_countdown):
+			valid_tasks = section_tasks[section.title]
+			return valid_tasks[len(valid_tasks) - section_countdown[section.title]]
+
+		remaining_tasks = list(tasks_wout_deadline)
+		while len(remaining_tasks) > 0:
+			myrandom = random.Random(self.myrandomseed)
+			section = weighted_sampling_without_replacement(weighted_sections, 1, myrandom)[0][1]
+			task = get_next_task_in_section(section, remaining_tasks, section_countdown)
+			# print('Selecting task %s from %s' % (task, section))
+			prioritized_tasks.append(task)
+			remaining_tasks.remove(task)
+			section_countdown[task.section.title] -= 1
+			weighted_sections = adjusted_section_weights(sections, section_countdown)
+
+		return prioritized_tasks
+
 	def _compute_schedule_for_category(self, tasks, category, stats):
 		"""
 		End date is understood such, that max_load can be done also on that day
@@ -341,6 +382,7 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 		remaing_effort = max_load
 		tasks_w_deadline = list(filter(lambda t: t.meta.end_date is not None, tasks))
 		tasks_wout_deadline = list(filter(lambda t: t.meta.end_date is None, tasks))
+		tasks_wout_deadline = self._prioritize_tasks(tasks_wout_deadline, stats)
 
 		tasks_w_deadline = sorted(tasks_w_deadline, key=attrgetter('meta.end_date'), reverse=True)
 
@@ -352,10 +394,9 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 		for task in tasks_wout_deadline:
 			first_available_date = self._schedule_task_wout_deadline(task, first_available_date, max_load, category, tasks)
 
-
-		# schedules.append(CategorySchedule(str(category), category_tasks, max_effort=8))
-
 	def _compute_schedule(self, sections, statistics):
+		sections = [section for section in sections if section.weight > 0]
+
 		nested_tasks = map(lambda section: section.tasks, sections)
 		all_tasks = [task for tasks in nested_tasks for task in tasks]
 
@@ -384,6 +425,7 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 		for x in range(len(endpos)):
 			regions.append(sublime.Region(validstartpos[x].end(), endpos[x].begin()))
 
+		self.view.unfold(sublime.Region(0, self.view.size()))
 		self.view.fold(regions)
 
 	def _mark_date_completed(self, sections, edit):
@@ -518,7 +560,10 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 		content = 'Last updated: {}'.format(datetime.now().strftime("%Y-%m-%d"))
 		self.view.replace(edit, replace_region, '\n\n' + content + '\n\n')
 
-	def run(self, edit):		
+	def run(self, edit):
+
+		self.myrandomseed = 4567
+
 		content=self.view.substr(sublime.Region(0, self.view.size()))
 		sections = self._extract_sections(content)
 		
@@ -528,7 +573,6 @@ class RoadmapCompile(sublime_plugin.TextCommand):
 
 		self._mark_date_completed(sections, edit)
 		self._update_section_timings(sections, edit, statistics)
-
 		self._update_upcoming_tasks(sections, edit, statistics)
 		self._update_planned_effort(sections, edit, statistics)
 		self._draw_weekly_schedule(sections, edit, statistics)
