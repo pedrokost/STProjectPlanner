@@ -155,6 +155,13 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 				tasks = list(filter(lambda task: task.has_category(category), all_tasks))
 			))
 
+		upcoming_task_groups.append(UpcomingTaskGroup(
+			title = 'Deadlined',
+			show_title = True,
+			tasks = list(filter(lambda task: task.has_deadline, all_tasks))	
+		))
+
+
 		all_task_groups_content = []
 		for task_group in upcoming_task_groups:
 			num_tasks = NUM_TASKS_PER_CATEGORY if task_group.show_title else default_num_tasks

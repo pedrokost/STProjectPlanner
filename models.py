@@ -85,6 +85,11 @@ class Task(object):
 	@scheduled_end_datetime.setter
 	def scheduled_end_datetime(self, value):
 		self._scheduled_end_datetime = value
+
+	@property
+	def has_deadline(self):
+		print(self, self.meta.end_date)
+		return self.meta.end_date is not None
 	
 	@property
 	def description(self):
