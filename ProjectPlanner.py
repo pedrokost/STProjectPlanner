@@ -11,7 +11,6 @@ from .utils import sparkline, truncate_middle, weeknumber, fmtweek
 from .utils import next_available_weekday, human_duration, weighted_sampling_without_replacement
 import random
 
-
 def plugin_loaded():
 	if not os.path.exists(sublime.packages_path()+"/User/project_planner.sublime-settings"):
 		# print(sublime.packages_path())

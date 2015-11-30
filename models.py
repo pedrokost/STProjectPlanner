@@ -88,7 +88,6 @@ class Task(object):
 
 	@property
 	def has_deadline(self):
-		print(self, self.meta.end_date)
 		return self.meta.end_date is not None
 	
 	@property

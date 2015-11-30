@@ -279,7 +279,8 @@ class ProjectPlannerTrello(sublime_plugin.TextCommand):
 
 		# Update name
 		end_name_pos = self.view.find(']', task_pos.begin(), sublime.LITERAL)
-		region = sublime.Region(task_pos.begin() + 1, end_name_pos.begin())
+		region = sublime.Region(task_pos.begin() + 3, end_name_pos.begin())
+
 		self.view.replace(edit, region, card_name)
 
 		# Update meta
@@ -320,7 +321,7 @@ class ProjectPlannerTrello(sublime_plugin.TextCommand):
 	def update_cards_metadata(self, connection, edit, matches):
 
 		for pair in matches:
-			tasks = [task.description for task in pair.section.tasks]
+			tasks = [task.raw for task in pair.section.tasks]
 			self.__update_card_section_metadata(connection, edit, tasks, pair.section.title)
 
 			if self.debug:
