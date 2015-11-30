@@ -58,6 +58,11 @@ class TrelloConnection(object):
     def get_card(self, card_id):
         return Card(self, card_id)
 
+    def set_card_position(self, card_id, new_position):
+        path = '/cards/' + card_id + '/pos'
+        body = json.dumps({'value': new_position})
+        return self.put(path, body=body)
+
     def get_list(self, list_id):
         return List(self, list_id)
 
@@ -347,6 +352,11 @@ class Card(LazyTrello, Closable, Deletable, Labeled):
         body = json.dumps({'text': text, 'idCard': self._id,
                            'key': self._conn.key, 'token': self._conn.token})
         return self._conn.post(path, body=body)
+
+    def set_position(self, new_position):
+        path = self._prefix + self._id + '/pos'
+        body = json.dumps({'value': new_position})
+        return self._conn.put(path, body=body)
 
     def comments(self):
         path = self._path + '/actions'

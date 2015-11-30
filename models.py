@@ -45,6 +45,19 @@ class Task(object):
 	def section(self):
 	    return self._section
 
+
+	@property
+	def is_trello_card(self):
+		CARD_ID_REGEX = 'https\:\/\/trello\.com\/c\/(?P<card_id>.+)\/'
+		return re.search(CARD_ID_REGEX, self.raw) is not None
+
+	@property
+	def trello_id(self):
+		CARD_ID_REGEX = 'https\:\/\/trello\.com\/c\/(?P<card_id>.+)\/'
+		match = re.search(CARD_ID_REGEX, self.raw)
+		if not match: return None  
+		return match.group('card_id')
+
 	def set_slots_for_category(self, category, slots):
 		self.slots[category] = slots
 
@@ -262,7 +275,7 @@ class Section(object):
 	@property
 	def tasks(self):
 		return self._tasks
-	
+
 	@property
 	def duration(self):
 		total_duration = 0 # lowest units based on DURATION_MAP

@@ -13,6 +13,51 @@ import sublime_requests as requests
 from .models import Task, Section, CategorySchedule, Statistics, DaySlot, human_duration
 from .utils import extract_task_metadata
 
+class ProjectPlannerTrelloUp(sublime_plugin.TextCommand):
+
+	def run(self, edit):
+		conf = sublime.load_settings('project_planner.sublime-settings')
+		self.key = conf.get('TRELLO_API_KEY')
+		self.token = conf.get("TRELLO_TOKEN")
+		self.board_id = conf.get("TRELLO_TEST_BOARD_ID")
+		self.skip_lists = conf.get("SKIP_LISTS")
+		self.done_lists = conf.get("DONE_LISTS")
+		self.skip_checklists = conf.get("SKIP_CHECKLISTS")
+		self.debug = False
+
+		trello_connection = trollop.TrelloConnection(self.key, self.token)
+
+		try:
+			self.safe_work(trello_connection, edit)
+		except Exception as e:
+			self.show_token_expired_help(e)
+			raise e
+
+	def show_token_expired_help(self, e):
+		print("It seems your token is invalid or has expired, try adding it again.\nToken URL: %s" % self.token_url(), "The error encountered was: '%s'" % e)
+
+	def token_url(self):
+		return "https://trello.com/1/connect?key=%s&name=project_planner&response_type=token&scope=read,write" % self.key
+
+	def __upload_card_order_in_section(self, connection, section):
+		trello_tasks = filter(lambda task: task.is_trello_card, section.tasks)
+		last_pos = 100
+		for task in trello_tasks:
+			print('Set position {} for card {}'.format(last_pos, task.description))
+			connection.set_card_position(task.trello_id, last_pos)
+			last_pos += 100 # be nice with Trello by leaving gaps for reordering
+
+	def __upload_card_order(self, connection, sections):
+		for section in sections:
+			self.__upload_card_order_in_section(connection, section)
+
+	def safe_work(self, connection, edit):
+		content=self.view.substr(sublime.Region(0, self.view.size()))
+		sections = ProjectPlannerTrello(edit).extract_sections(content)
+
+		self.__upload_card_order(connection, sections)
+
+
 class ProjectPlannerTrello(sublime_plugin.TextCommand):
 	"""
 	https://github.com/sarumont/py-trello
@@ -146,7 +191,7 @@ class ProjectPlannerTrello(sublime_plugin.TextCommand):
 
 		return indices
 
-	def __extract_sections(self, content):
+	def extract_sections(self, content):
 		# TODO: This is a copy-paste from RoadmapCompile. Extract into another
 		# module
 
@@ -401,7 +446,7 @@ class ProjectPlannerTrello(sublime_plugin.TextCommand):
 			print("DEBUG MODE IS ON")
 
 		content=self.view.substr(sublime.Region(0, self.view.size()))
-		sections = self.__extract_sections(content)
+		sections = self.extract_sections(content)
 
 		board = connection.get_board(self.board_id)
 		lists = [list for list in board.lists if list.name not in self.skip_lists]
