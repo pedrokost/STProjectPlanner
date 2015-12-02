@@ -142,10 +142,14 @@ class ProjectPlannerTrello(sublime_plugin.TextCommand):
 			print('for some reason couldn\'t find location to insert the section')
 
 		def format_task(card):
-			return "\n- [" + card.name + '](' + card.url + ')' 
+			return "\n- [" + card.name + '](' + self.url_core(card.url) + ')' 
 
 		for card in cards:
 			self.view.insert(edit, index, format_task(card))
+
+	def url_core(self, url):
+		REGEX = '(?P<url_core>https:\/\/trello.com\/c\/.+\/)(\d+-.+)?'
+		return re.match(REGEX, url).group('url_core')
 
 	def add_missing_cards(self, connection, edit, matches):
 		def has_match(url, str_array):
@@ -155,7 +159,7 @@ class ProjectPlannerTrello(sublime_plugin.TextCommand):
 			return False
 
 		for pair in matches:
-			missing_cards = [card for card in pair.list.cards if not has_match(card.url, pair.section.lines)]
+			missing_cards = [card for card in pair.list.cards if not has_match(self.url_core(card.url), pair.section.lines)]
 			self.insert_missing_cards(missing_cards, pair.section, edit)
 
 	def next_section_start(self, start=0, delimeter='^##'):
@@ -325,8 +329,13 @@ class ProjectPlannerTrello(sublime_plugin.TextCommand):
 		# Update name
 		end_name_pos = self.view.find(']', task_pos.begin(), sublime.LITERAL)
 		region = sublime.Region(task_pos.begin() + 3, end_name_pos.begin())
-
 		self.view.replace(edit, region, card_name)
+
+		# Use shorter trello url (to prevent name clashes)
+		start_pos = self.view.find(']', task_pos.begin(), sublime.LITERAL)
+		end_pos = self.view.find(')', start_pos.end(), sublime.LITERAL)
+		region = sublime.Region(start_pos.end() + 1, end_pos.begin())
+		self.view.replace(edit, region, self.url_core(card.url))
 
 		# Update meta
 		line = self.view.line(task_pos.begin())
@@ -421,7 +430,7 @@ class ProjectPlannerTrello(sublime_plugin.TextCommand):
 		def find_in_section(card, section_title):
 			title_idx = self.view.find(section_title, 0)
 			next_section = self.next_section_start(title_idx.end())
-			card_idx = self.view.find(card.url, title_idx.end())
+			card_idx = self.view.find(self.url_core(card.url), title_idx.end())
 			if card_idx.end() > 0 and card_idx.end() < next_section:
 				return self.view.line(card_idx.begin())
 			else:
