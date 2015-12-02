@@ -2,8 +2,8 @@
 # Copyright (c) 2011 Brad Greenlee
 
 import re
-from . import requests
-from .requests.status_codes import codes
+import requests
+from requests.status_codes import codes
 try:
     import http.client as httplib
 except ImportError:
