@@ -2,7 +2,7 @@ from urllib.parse import urlencode
 import json
 
 # import requests
-import sublime_requests as requests
+from . import sublime_requests as requests
 
 def get_class(str_or_class):
     """Accept a name or actual class object for a class in the current module.

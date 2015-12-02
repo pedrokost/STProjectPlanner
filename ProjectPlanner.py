@@ -4,12 +4,12 @@ from collections import namedtuple, Counter
 import operator
 from operator import attrgetter, methodcaller, itemgetter
 from time import gmtime, strftime
+import random
 import sublime, sublime_plugin
 from .models import Task, Section, CategorySchedule, Statistics, DaySlot
 from .models import human_duration
 from .utils import sparkline, truncate_middle, weeknumber, fmtweek
 from .utils import next_available_weekday, human_duration, weighted_sampling_without_replacement
-import random
 
 class ProjectPlannerCompile(sublime_plugin.TextCommand):
 	HEADING_IDENTIFIER = '#'

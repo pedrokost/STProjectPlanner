@@ -5,11 +5,8 @@ from operator import attrgetter
 from datetime import datetime, date
 from collections import namedtuple, Counter
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
-
-import trollop
-import sublime_requests as requests
+from .lib import trollop
+from .lib import sublime_requests as requests
 from .models import Task, Section, CategorySchedule, Statistics, DaySlot, human_duration
 from .utils import extract_task_metadata
 
@@ -24,15 +21,15 @@ class ProjectPlannerTrelloUp(sublime_plugin.TextCommand):
 		self.done_lists = conf.get("DONE_LISTS")
 		self.skip_checklists = conf.get("SKIP_CHECKLISTS")
 
-		# self.debug = False
+		self.debug = False
 
-		# trello_connection = trollop.TrelloConnection(self.key, self.token)
+		trello_connection = trollop.TrelloConnection(self.key, self.token)
 
-		# try:
-		# 	self.safe_work(trello_connection, edit)
-		# except Exception as e:
-		# 	self.show_token_expired_help(e)
-		# 	raise e
+		try:
+			self.safe_work(trello_connection, edit)
+		except Exception as e:
+			self.show_token_expired_help(e)
+			raise e
 
 	def show_token_expired_help(self, e):
 		print("It seems your token is invalid or has expired, try adding it again.\nToken URL: %s" % self.token_url(), "The error encountered was: '%s'" % e)

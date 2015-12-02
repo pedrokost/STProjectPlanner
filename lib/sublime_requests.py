@@ -2,13 +2,13 @@
 # Copyright (c) 2011 Brad Greenlee
 
 import re
-import requests
-from requests.status_codes import codes
+from . import requests
+from .requests.status_codes import codes
 try:
     import http.client as httplib
 except ImportError:
     import httplib
-import commandline
+from . import commandline
 import sublime
 from io import BytesIO
 import logging
