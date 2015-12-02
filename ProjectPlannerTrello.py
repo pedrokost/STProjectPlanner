@@ -335,7 +335,7 @@ class ProjectPlannerTrello(sublime_plugin.TextCommand):
 		card_durations = self.__compute_card_duration(schedulable_items, Section.DURATION_MAP, len(checklists), task)
 		card_duration_human = ''
 
-		card_durations = sorted(card_durations, key=attrgetter('value'), reverse=True)
+		card_durations = sorted(card_durations, key=attrgetter('value', 'category'), reverse=True)
 
 		# Ensure None is the first category in the pipeline
 		# Then I don't need to print it anymore, making my compiler smarter
