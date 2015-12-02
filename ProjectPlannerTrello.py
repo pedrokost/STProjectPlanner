@@ -102,17 +102,30 @@ class ProjectPlannerTrello(sublime_plugin.TextCommand):
 		match = self.view.find(list.name, 0, sublime.LITERAL)
 		return match.begin() != -1 and match.begin() < trello_section.begin()
 
-	def list_missing_lists(self, connection, edit):
+	def insert_missing_lists(self, connection, edit):
+		"""
+		Insert missing sections in their correct position on the document
+		"""
 		board = connection.get_board(self.board_id)
 		lists = [list for list in board.lists if list.name not in self.skip_lists]
 
-		missing_lists = [list for list in lists if not self.list_exists(list)]
-
-		if len(missing_lists) > 0:
-			self.errors.append({
-				'category': 'Missing lists',
-				'errors': [list.name for list in missing_lists]
-			})
+		for index, list in enumerate(lists):
+			if not self.list_exists(list):
+				if index == 0:
+					# Assumes that at least one list already added
+					ii = index
+					while True:
+						next_section = lists[ii+1]
+						ii += 1
+						next_insert_pos = self.view.find('## {}'.format(next_section.name), 0, sublime.LITERAL)
+						if next_insert_pos.begin() != -1:
+							break
+					self.view.insert(edit, next_insert_pos.begin(), '## {}\n\n'.format(list.name))
+				else:
+					previous_list = lists[index-1]
+					prev_section_pos = self.view.find('## {}'.format(previous_list.name), 0, sublime.LITERAL)
+					next_insert_pos = self.next_section_start(prev_section_pos.end())
+					self.view.insert(edit, next_insert_pos, '## {}\n\n'.format(list.name))
 
 	def find_matching_section(self, list, sections):
 
@@ -134,10 +147,15 @@ class ProjectPlannerTrello(sublime_plugin.TextCommand):
 		return matches
 
 	def insert_missing_cards(self, cards, section, edit):
+		print('Inserting missing cards into ', section.title)
 		section_pos = self.view.find(section.title, 0, sublime.LITERAL)
-		last_task_pos = self.view.find(section.tasks[-1].raw, section_pos.end(), sublime.LITERAL)
 
-		index = last_task_pos.end() if last_task_pos.end() != -1 else section_pos.end()
+		if len(section.tasks) == 0:
+			index = section_pos.end()
+		else:
+			last_task_pos = self.view.find(section.tasks[-1].raw, section_pos.end(), sublime.LITERAL)
+			index = last_task_pos.end() # if last_task_pos.end() != -1 else section_pos.end()
+
 		if index == -1:
 			print('for some reason couldn\'t find location to insert the section')
 
@@ -445,7 +463,6 @@ class ProjectPlannerTrello(sublime_plugin.TextCommand):
 				 	replace_region = sublime.Region(card_line.begin(), card_line.begin() + 1)
 				 	self.view.replace(edit, replace_region, '+')
 
-
 	def safe_work(self, connection, edit):
 
 		self.errors = []
@@ -456,15 +473,26 @@ class ProjectPlannerTrello(sublime_plugin.TextCommand):
 
 		content=self.view.substr(sublime.Region(0, self.view.size()))
 		sections = self.extract_sections(content)
+		
+		self.insert_missing_lists(connection, edit)
 
+		# To enlist newly added sections
+		content=self.view.substr(sublime.Region(0, self.view.size()))
+		sections = self.extract_sections(content)
+		
 		board = connection.get_board(self.board_id)
 		lists = [list for list in board.lists if list.name not in self.skip_lists]
 		done_lists = [list for list in board.lists if list.name in self.done_lists]
 		matches = self.find_matching_sections(lists, sections)
 
-		self.list_missing_lists(connection, edit)
 		self.warn_incorrect_list_order(lists, sections)
 		self.add_missing_cards(connection, edit, matches)
+
+		# REcreate the secitons and matches, since that's where they generate their tasks
+		content=self.view.substr(sublime.Region(0, self.view.size()))
+		sections = self.extract_sections(content)
+		matches = self.find_matching_sections(lists, sections)
+
 		self.update_cards_metadata(connection, edit, matches)
 		self.mark_completed(sections, edit, done_lists)
 		self.display_errors(edit)
