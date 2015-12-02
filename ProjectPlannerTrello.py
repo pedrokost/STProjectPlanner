@@ -1,6 +1,6 @@
 import sublime, sublime_plugin
 from subprocess import call
-import os, shutil, sys, re
+import os, sys, re
 from operator import attrgetter
 from datetime import datetime, date
 from collections import namedtuple, Counter
@@ -16,22 +16,23 @@ from .utils import extract_task_metadata
 class ProjectPlannerTrelloUp(sublime_plugin.TextCommand):
 
 	def run(self, edit):
-		conf = sublime.load_settings('project_planner.sublime-settings')
+		conf = sublime.load_settings('ProjectPlanner.sublime-settings')
 		self.key = conf.get('TRELLO_API_KEY')
 		self.token = conf.get("TRELLO_TOKEN")
 		self.board_id = conf.get("TRELLO_TEST_BOARD_ID")
 		self.skip_lists = conf.get("SKIP_LISTS")
 		self.done_lists = conf.get("DONE_LISTS")
 		self.skip_checklists = conf.get("SKIP_CHECKLISTS")
-		self.debug = False
 
-		trello_connection = trollop.TrelloConnection(self.key, self.token)
+		# self.debug = False
 
-		try:
-			self.safe_work(trello_connection, edit)
-		except Exception as e:
-			self.show_token_expired_help(e)
-			raise e
+		# trello_connection = trollop.TrelloConnection(self.key, self.token)
+
+		# try:
+		# 	self.safe_work(trello_connection, edit)
+		# except Exception as e:
+		# 	self.show_token_expired_help(e)
+		# 	raise e
 
 	def show_token_expired_help(self, e):
 		print("It seems your token is invalid or has expired, try adding it again.\nToken URL: %s" % self.token_url(), "The error encountered was: '%s'" % e)
@@ -73,7 +74,7 @@ class ProjectPlannerTrello(sublime_plugin.TextCommand):
 
 	def run(self, edit):
 		print('Trello plugin run')
-		conf = sublime.load_settings('project_planner.sublime-settings')
+		conf = sublime.load_settings('ProjectPlanner.sublime-settings')
 		self.key = conf.get('TRELLO_API_KEY')
 		self.token = conf.get("TRELLO_TOKEN")
 		self.board_id = conf.get("TRELLO_TEST_BOARD_ID")

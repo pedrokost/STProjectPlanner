@@ -1,0 +1,12 @@
+[
+    { "caption": "Project Planner Trello Sync: Download timings and cards", "command": "project_planner_trello" },
+    { "caption": "Project Planner Trello Sync: Upload card order", "command": "project_planner_trello_up" },
+    { "caption": "Preferences: ProjectPlanner Settings - User",
+        "command": "open_file",
+        "args": {"file": "${packages}/User/ProjectPlanner.sublime-settings"}
+    },
+    { "caption": "Preferences: ProjectPlanner Settings - Default",
+        "command": "open_file",
+        "args": {"file": "${packages}/ProjectPlanner/ProjectPlanner.sublime-settings"}
+    }
+]

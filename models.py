@@ -457,7 +457,7 @@ class Statistics(object):
 		return sorted(list(set(all_categories)))
 
 	def max_load_for_category(self, category):
-		conf = sublime.load_settings('project_planner.sublime-settings')
+		conf = sublime.load_settings('ProjectPlanner.sublime-settings')
 		default_workload = conf.get('default_daily_category_workload')
 		overrides = conf.get("category_workloads", [])
 

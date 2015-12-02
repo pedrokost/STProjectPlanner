@@ -1,4 +1,4 @@
-import re, os, sys, shutil
+import re, os, sys
 from datetime import timedelta, datetime, date
 from collections import namedtuple, Counter
 import operator
@@ -10,11 +10,6 @@ from .models import human_duration
 from .utils import sparkline, truncate_middle, weeknumber, fmtweek
 from .utils import next_available_weekday, human_duration, weighted_sampling_without_replacement
 import random
-
-def plugin_loaded():
-	if not os.path.exists(sublime.packages_path()+"/User/project_planner.sublime-settings"):
-		# print(sublime.packages_path())
-		shutil.copyfile(sublime.packages_path()+"/ProjectPlanner/project_planner.sublime-settings", sublime.packages_path()+"/User/project_planner.sublime-settings")
 
 class ProjectPlannerCompile(sublime_plugin.TextCommand):
 	HEADING_IDENTIFIER = '#'
