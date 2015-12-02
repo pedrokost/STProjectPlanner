@@ -40,7 +40,7 @@ class ProjectPlannerTrelloUp(sublime_plugin.TextCommand):
 		return "https://trello.com/1/connect?key=%s&name=project_planner&response_type=token&scope=read,write" % self.key
 
 	def __upload_card_order_in_section(self, connection, section):
-		trello_tasks = filter(lambda task: task.is_trello_card, section.tasks)
+		trello_tasks = filter(lambda task: task.is_trello_card, section.all_tasks)
 		last_pos = 100
 		for task in trello_tasks:
 			print('Set position {} for card {}'.format(last_pos, task.description))

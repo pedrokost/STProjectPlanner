@@ -212,6 +212,7 @@ class Section(object):
 		self._row_at = row_at
 
 		all_tasks = [Task(raw_task, self) for raw_task in self.raw_tasks if self.is_valid]
+		self._all_tasks = all_tasks
 		self._tasks = [task for task in all_tasks if task.is_mandatory]
 		weight_regex = '\((?P<weight>\d+(\.\d+)?)x\)'
 		priority_match = re.search(weight_regex, self.lines[0])
@@ -275,6 +276,10 @@ class Section(object):
 	@property
 	def tasks(self):
 		return self._tasks
+
+	@property
+	def all_tasks(self):
+	    return self._all_tasks
 
 	@property
 	def duration(self):
