@@ -147,27 +147,41 @@ class ProjectPlannerTrello(sublime_plugin.TextCommand):
 		return matches
 
 	def insert_missing_cards(self, cards, section, edit):
-		print('Inserting missing cards into ', section.title)
 		section_pos = self.view.find(section.title, 0, sublime.LITERAL)
 
-		if len(section.tasks) == 0:
-			index = section_pos.end()
+		if len(section.all_tasks) == 0:
+			index = self.next_section_start(self.view.find(section.title, 0, sublime.LITERAL).end())
+			empty_section = True
 		else:
-			last_task_pos = self.view.find(section.tasks[-1].raw, section_pos.end(), sublime.LITERAL)
+			last_task_pos = self.view.find(section.all_tasks[-1].raw, section_pos.end(), sublime.LITERAL)
 			index = last_task_pos.end() # if last_task_pos.end() != -1 else section_pos.end()
+			empty_section = False
 
 		if index == -1:
-			print('for some reason couldn\'t find location to insert the section')
+			print('WARNING: for some reason couldn\'t find location to insert the section {}'.format(section, section.all_tasks[-1]))
 
-		def format_task(card):
-			return "\n- [" + card.name + '](' + self.url_core(card.url) + ')' 
+		def format_task(card, empty_section):
+			if empty_section:
+				return "- [" + card.name + '](' + self.url_core(card.url) + ')\n' 
+			else:
+				return "\n- [" + card.name + '](' + self.url_core(card.url) + ')' 
 
-		for card in cards:
-			self.view.insert(edit, index, format_task(card))
+		# Insert items in Trello order
+		rev_cards = reversed(cards)
+		for card in rev_cards:
+			self.view.insert(edit, index, format_task(card, empty_section))
 
 	def url_core(self, url):
 		REGEX = '(?P<url_core>https:\/\/trello.com\/c\/.+\/)(\d+-.+)?'
 		return re.match(REGEX, url).group('url_core')
+
+	def remove_incorrect_cards(self, tasks, section, edit):
+		section_pos = self.view.find(section.title, 0, sublime.LITERAL)
+		for task in tasks:
+			line = self.view.line(self.view.find(task.raw, section_pos.end(), sublime.LITERAL))
+			line.a -= 1
+			self.view.replace(edit, line, '')
+			print('Removed task {} from incorrect section {}'.format(task, section.title))
 
 	def add_missing_cards(self, connection, edit, matches):
 		def has_match(url, str_array):
@@ -176,9 +190,15 @@ class ProjectPlannerTrello(sublime_plugin.TextCommand):
 					return True
 			return False
 
+
 		for pair in matches:
+			card_urls = [card.url for card in pair.list.cards]
 			missing_cards = [card for card in pair.list.cards if not has_match(self.url_core(card.url), pair.section.lines)]
+
+			incorrect_list_tasks = [task for task in pair.section.all_tasks if task.is_trello_card and not has_match(self.url_core(task.trello_url), card_urls)]
+
 			self.insert_missing_cards(missing_cards, pair.section, edit)
+			self.remove_incorrect_cards(incorrect_list_tasks, pair.section, edit)
 
 	def next_section_start(self, start=0, delimeter='^##'):
 		next_section = self.view.find('^##', start).begin()

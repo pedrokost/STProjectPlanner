@@ -259,7 +259,7 @@ class LazyTrello(object):
             # object.
             if not '_data' in self.__dict__:
                 self._data = json.loads(self._conn.get(self._path))
-                print(self._data)
+                # print(self._data)
 
             return self._data
         else:

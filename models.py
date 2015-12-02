@@ -52,6 +52,11 @@ class Task(object):
 		return re.search(CARD_ID_REGEX, self.raw) is not None
 
 	@property
+	def trello_url(self):
+	    CARD_ID_REGEX = 'https\:\/\/trello\.com\/c\/(?P<card_id>.+)\/'
+	    return re.search(CARD_ID_REGEX, self.raw).group(0)
+
+	@property
 	def trello_id(self):
 		CARD_ID_REGEX = 'https\:\/\/trello\.com\/c\/(?P<card_id>.+)\/'
 		match = re.search(CARD_ID_REGEX, self.raw)
