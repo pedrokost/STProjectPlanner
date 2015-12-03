@@ -10,7 +10,7 @@ This project is in **alpha** stage. Use this plugin at your own risk. At least e
 
 Unlike "big" project planning tools, this tools allows you to focus on preparing just the upcoming tasks and automatically scheduling tasks with and without deadline. This tool is for you if you think Gantt's charts are overkill, but still want to have a holistic view of your project.
 
-The plugin is run on all files ending in `projectplan.md` when they are saved.
+The plugin is run on all files ending in `.projectplan.md` when they are saved.
 
 ## Use cases
 
