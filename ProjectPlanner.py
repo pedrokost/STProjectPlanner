@@ -463,7 +463,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 
 	def _draw_weekly_schedule(self, sections, edit, statistics):
 
-		heading_region = self.view.find('^### (\d+ )?Week(.+) effort timeline', 0)
+		heading_region = self.view.find('^### (\d+w? )?Week(.+) effort timeline', 0)
 		if heading_region.begin() == -1:
 			return
 
