@@ -118,11 +118,11 @@ To see how the work is distributed between categories over time is is useful to 
 
 By default it shows the work distribution for the next 10 weeks. It is possible to see more or less weeks into the future by modifying the title with the number of weeks to show, like this:
 
-`### 5w weekly effort timeline`: Show 5 weeks only
+`### 5 weekly effort timeline`: Show 5 weeks only
 
 or
 
-`### 20w Weekly effort timeline`: Show 20 weeks
+`### 20 Weekly effort timeline`: Show 20 weeks
 
 #### Section schedule
 
