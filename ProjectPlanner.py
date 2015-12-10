@@ -232,7 +232,8 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 			# print('SCHEDULE INFO: Task %s will have to begin earlier due to later tasks taking long' % (task,))
 			end_date = available_before_date
 
-		# TODO: print error if task was supposed to be finished before today
+		if end_date < datetime.today():
+			self.add_error('Past deadline', '"{}" ({}) should have been completed by {}'.format(task.description, category, end_date.date()))
 		# Skip saturday & sunday
 		if end_date.weekday() == SATURDAY:
 			end_date -= timedelta(days=1)

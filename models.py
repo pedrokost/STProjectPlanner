@@ -45,6 +45,17 @@ class Task(object):
 	def section(self):
 	    return self._section
 
+	@property
+	def name(self):
+		"""
+		Mathes task without links without meta without
+		"""
+		name = self._description.strip()
+		# Remove the trello link if any
+		if name[0] == '[' and name[-1] == ')':
+			name = re.search('\[(?P<name>.+)\].+', name).group('name')
+		return name
+
 
 	@property
 	def is_trello_card(self):
