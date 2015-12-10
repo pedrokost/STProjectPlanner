@@ -545,7 +545,32 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 		replace_region = sublime.Region(line.end(), next_section_index)
 		self.view.replace(edit, replace_region, '\n\n```\n' + effort_content + '```\n\n')
 
-	def _update_timestamp(self, edit):
+	def add_error(self, category, error):
+		exists = [err for err in self.errors if err['category'] == category]
+
+		if exists:
+			exists[0]['errors'].append(error)
+		else:
+			self.errors.append({
+				'category': category,
+				'errors': [error]
+			})
+
+	def _errors_content(self):
+		content = ''
+		if len(self.errors) > 0:
+			content = '\n\nThere are errors in your plan:\n\n'
+			for errorgroup in self.errors:
+				content += '*{}*:\n'.format(errorgroup['category'])
+				for error in errorgroup['errors']:
+					content += '- {}\n'.format(error)
+				content += '\n'
+		else:
+			content = '\n\n'
+
+		return content
+
+	def _update_timestamp_and_errors(self, edit):
 
 		heading_region = self.view.find('^# ', 0)
 		if heading_region.begin() == -1:
@@ -556,10 +581,14 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 		next_section_index = self.view.find('^##', line.end()).begin()
 		replace_region = sublime.Region(line.end(), next_section_index)
 		content = 'Last updated: {}'.format(datetime.now().strftime("%Y-%m-%d"))
-		self.view.replace(edit, replace_region, '\n\n' + content + '\n\n')
+
+		content += self._errors_content()
+
+		self.view.replace(edit, replace_region, '\n\n' + content)
 
 	def run(self, edit):
 
+		self.errors = []
 		self.myrandomseed = 4567
 		
 		content=self.view.substr(sublime.Region(0, self.view.size()))
@@ -575,6 +604,6 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 		self._update_planned_effort(sections, edit, statistics)
 		self._draw_weekly_schedule(sections, edit, statistics)
 		self._draw_section_schedule(sections, edit, statistics)
-		self._update_timestamp(edit)
+		self._update_timestamp_and_errors(edit)
 
 		self._fold_links()
