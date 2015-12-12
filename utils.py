@@ -3,6 +3,10 @@ from operator import attrgetter, methodcaller, itemgetter
 import re
 from collections import namedtuple
 
+def listdiff(a, b):
+    b = set(b)
+    return [aa for aa in a if aa not in b]
+
 def sparkline(values, smallest=-1, largest=-1):
 	if len(values) == 0:
 		return ''

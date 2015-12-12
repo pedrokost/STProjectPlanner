@@ -20,7 +20,7 @@ class Task(object):
 
 	DATE_FORMAT = '%Y-%m-%d'
 
-	def __init__(self, raw, section):
+	def __init__(self, raw, section, section_order):
 		
 		def extract_description(task):
 			TASK_META_MATCH_REGEX = '\[(?P<flags>M\s?)?(?P<categories>(\d+\w\s?)?(\w+)?(\w+\s\d+\w\s?)*)(?P<end_date>\d{4}-\d{2}-\d{2})?\]$'
@@ -35,16 +35,37 @@ class Task(object):
 		self._raw = raw 
 		self._meta, self._raw_meta = extract_task_metadata(raw)
 		self._description = extract_description(raw)
-		self._scheduled_start_datetime = None
-		self._scheduled_end_datetime = None
 		self._fake_duration = {}
 		self.slots = {}
 		self._section = section
+		self._pos = section_order
+		self._depends_on = None
+		self._prerequirement_for = None
 
 	@property
+	def pos(self):
+		return self._pos
+	
+	@property
 	def section(self):
-	    return self._section
+		return self._section
 
+	@property
+	def depends_on_deadlined(self):
+		return self._depends_on
+
+	@depends_on_deadlined.setter
+	def depends_on_deadlined(self, task):
+		self._depends_on = task
+
+	@property
+	def prerequirement_for_deadlined(self):
+		return self._prerequirement_for
+
+	@prerequirement_for_deadlined.setter
+	def prerequirement_for_deadlined(self, task):
+		self._prerequirement_for = task
+	
 	@property
 	def name(self):
 		"""
@@ -56,7 +77,6 @@ class Task(object):
 			name = re.search('\[(?P<name>.+)\].+', name).group('name')
 		return name
 
-
 	@property
 	def is_trello_card(self):
 		CARD_ID_REGEX = 'https\:\/\/trello\.com\/c\/(?P<card_id>.+)\/'
@@ -64,8 +84,8 @@ class Task(object):
 
 	@property
 	def trello_url(self):
-	    CARD_ID_REGEX = 'https\:\/\/trello\.com\/c\/(?P<card_id>.+)\/'
-	    return re.search(CARD_ID_REGEX, self.raw).group(0)
+		CARD_ID_REGEX = 'https\:\/\/trello\.com\/c\/(?P<card_id>.+)\/'
+		return re.search(CARD_ID_REGEX, self.raw).group(0)
 
 	@property
 	def trello_id(self):
@@ -99,21 +119,31 @@ class Task(object):
 	def has_category(self, category):
 		return category in self.meta.categories.keys()
 	
-	@property
-	def scheduled_start_datetime(self):
-	    return self._scheduled_start_datetime
+	def scheduled_start_date(self, category):
+		"""
+		Date-precesion of task start date
+		"""
+		if category in ['All', 'Deadlined']:
+			all_slots = []
+			for cat in self.categories():
+				all_slots += self.get_slots_for_category(cat)
+			all_dates = [s.date for s in all_slots]
+			return min(all_dates)
+		slots = self.get_slots_for_category(category)
+		return slots[-1].date
 
-	@scheduled_start_datetime.setter
-	def scheduled_start_datetime(self, value):
-		self._scheduled_start_datetime = value
-
-	@property
-	def scheduled_end_datetime(self):
-	    return self._scheduled_end_datetime
-
-	@scheduled_end_datetime.setter
-	def scheduled_end_datetime(self, value):
-		self._scheduled_end_datetime = value
+	def scheduled_end_date(self, category):
+		"""
+		Date-precision of task end date.
+		"""
+		if category in ['All', 'Deadlined']:
+			all_slots = []
+			for cat in self.categories():
+				all_slots += self.get_slots_for_category(cat)
+			all_dates = [s.date for s in all_slots]
+			return max(all_dates)
+		slots = self.get_slots_for_category(category)
+		return slots[0].date
 
 	@property
 	def has_deadline(self):
@@ -227,7 +257,11 @@ class Section(object):
 		self._is_valid = is_valid
 		self._row_at = row_at
 
-		all_tasks = [Task(raw_task, self) for raw_task in self.raw_tasks if self.is_valid]
+		all_tasks = []
+		if self.is_valid:
+			for index, raw_task in enumerate(self.raw_tasks):
+				all_tasks.append(Task(raw_task, self, index))
+
 		self._all_tasks = all_tasks
 		self._tasks = [task for task in all_tasks if task.is_mandatory]
 		weight_regex = '\((?P<weight>\d+(\.\d+)?)x\)'
@@ -243,7 +277,7 @@ class Section(object):
 
 	@property
 	def weight(self):
-	    return self._weight
+		return self._weight
 
 	@property
 	def lines(self):
@@ -295,7 +329,7 @@ class Section(object):
 
 	@property
 	def all_tasks(self):
-	    return self._all_tasks
+		return self._all_tasks
 
 	@property
 	def duration(self):
@@ -335,120 +369,6 @@ class Section(object):
 
 	def __lt__(self, other):
 		return self.title < other.title
-
-class CategorySchedule(object):
-	"""Schedule(tasks)"""
-	def __init__(self, name, tasks, max_effort=8):
-		self._name = name
-		self._tasks = list(tasks)
-		self._max_effort = max_effort
-		self._generate_schedule(self._tasks, max_effort)
-
-	@property
-	def name(self):
-	    return self._name
-
-	@property
-	def tasks(self):
-	    return self._tasks
-	
-
-	def _generate_schedule(self, tasks, max_effort):
-		"""
-		In this function, datetime and such receive the maening of a work_hour
-		and not full hours.
-		"""
-
-		if max_effort > 24:
-			print ("ERROR: Maximum max_effort per category is 24 hours. Results will be incorrect")
-
-		last_empty_timeslot = datetime(2999, 12, 12)
-		tasks_w_deadline = filter(lambda t: t.meta.end_date is not None, tasks)
-		tasks_wout_deadline = filter(lambda t: t.meta.end_date is None, tasks)
-
-		def count_weekends_between(start_date, end_date):
-			"""
-			Count number of time a friday has gone to a saturday in the given
-			dates
-			"""
-			
-			if start_date.date() == end_date.date():
-				return 0
-
-			weekdays = 0
-			cur_dt = start_date
-			end_dt = end_date - timedelta(days=1)
-			while cur_dt <= end_dt:
-				if cur_dt.weekday() == 4 and (cur_dt + timedelta(days=1)).weekday() == 5:
-					weekdays+=1
-				cur_dt = cur_dt + timedelta(days=1)
-
-			# fm = "%c"
-			# print("%d weekdays between %s and %s" % (weekdays, format(start_date, fm), format(end_date, fm)))
-
-			return weekdays
-
-		# Place tasks with deadline, starting from the last to the first
-		sorted_tasks_w_deadline = sorted(tasks_w_deadline, key=attrgetter('meta.end_date'), reverse=True)
-
-		for task in sorted_tasks_w_deadline:
-			# Setting the task's scheduled_end_datetime
-			if task.meta.end_date < last_empty_timeslot:
-				task.scheduled_end_datetime = datetime.combine(task.meta.end_date, datetime.max.time())
-			else:
-				print('SCHEDULE INFO: Task %s will have to begin earlier due to later tasks taking long' % (task,))
-				task.scheduled_end_datetime = last_empty_timeslot
-
-			# duration defined in work-hours
-			scaled_hours = task.duration * (24.0 / max_effort)
-
-			time_to_subtract = timedelta(hours=scaled_hours)
-
-
-			# Weekends are non-working: extend the schedule
-			num_weekends = count_weekends_between(task.scheduled_end_datetime - time_to_subtract, task.scheduled_end_datetime)
-			time_to_subtract += timedelta(days=2*num_weekends)
-
-			task.scheduled_start_datetime = task.scheduled_end_datetime - time_to_subtract
-			last_empty_timeslot = task.scheduled_start_datetime
-
-		today_start = datetime.combine(date.today(), datetime.min.time())
-		# print(last_empty_timeslot, today_start)
-		if last_empty_timeslot < today_start:
-			print('SCHEDULE WARNING: The schedule is set to start before today (%s is set to begin %s)' % ( sorted_tasks_w_deadline[-1], sorted_tasks_w_deadline[-1].scheduled_start_datetime))
-
-
-		def get_unnalocated_time_at(date, tasks):
-			# TODO: implement
-			return 1
-			# pass
-
-		# TODO:Place tasks without deadline, in default order
-		# TODO: sort by urgency anyway
-		# last_unallocated_day = today_start
-		# for task in tasks_wout_deadline:
-		# 	duration_left = task.duration * (24.0 / max_effort)
-		# 	start_dt = None
-		# 	end_dt = None
-		# 	while duration_left > 0:
-		# 		time_left = get_unnalocated_time_at(last_unallocated_day, tasks)
-		# 		if time_left > 0 and start_dt is None:
-		# 			start_dt = last_unallocated_day
-		# 		allocate_today = 24 - time_left
-		# 		if allocate_today > 0:
-		# 			print('TODO: Do partial allocation for today')
-		# 		last_unallocated_day += timedelta(days=1)
-		# 		duration_left -= 1 
-	
-
-
-	# To create schedule for single cateroy:
-	# Place all tasks with deadline onto timeline wrt to the constraints of that category (max work for that category per day) - start at the last task
-		# print errors if start_time of any tasks becomes earlier than today
-	# Place all remaining tasks in order from beginning till the end	
-
-
-
 
 class Statistics(object):
 	"""Statistics(sections)"""

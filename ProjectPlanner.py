@@ -6,10 +6,11 @@ from operator import attrgetter, methodcaller, itemgetter
 from time import gmtime, strftime
 import random
 import sublime, sublime_plugin
-from .models import Task, Section, CategorySchedule, Statistics, DaySlot
+from .models import Task, Section, Statistics, DaySlot
 from .models import human_duration
 from .utils import sparkline, truncate_middle, weeknumber, fmtweek
 from .utils import next_available_weekday, human_duration, weighted_sampling_without_replacement
+from .utils import listdiff
 
 class ProjectPlannerCompile(sublime_plugin.TextCommand):
 	HEADING_IDENTIFIER = '#'
@@ -116,7 +117,8 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 			return
 
 		def upcoming_cat_task_group_content(task_group, num_tasks, category):
-			sorted_tasks = sorted(task_group.tasks, key=methodcaller('category_urgency', category))
+			# TODO: could use the actual schduler now :)
+			sorted_tasks = sorted(task_group.tasks, key=methodcaller('scheduled_start_date', category))
 
 			sorted_tasks_string = '\n\n### ' + task_group.title + ' upcoming tasks\n\n' if task_group.show_title else ''
 			sorted_tasks_string += '\n'.join([str(task) for task in sorted_tasks[:num_tasks]])
@@ -225,21 +227,21 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 			available_before_date -= timedelta(days=1)
 
 		# Define end_date
-		if task.meta.end_date < available_before_date:
+		if task.meta.end_date is not None and task.meta.end_date < available_before_date:
 			end_date = task.meta.end_date
 			available_effort = max_effort
 		else:
 			# print('SCHEDULE INFO: Task %s will have to begin earlier due to later tasks taking long' % (task,))
 			end_date = available_before_date
 
-		if end_date < datetime.today():
-			self.add_error('Past deadline', '"{}" ({}) should have been completed by {}'.format(task.description, category, end_date.date()))
 		# Skip saturday & sunday
 		if end_date.weekday() == SATURDAY:
 			end_date -= timedelta(days=1)
 		elif end_date.weekday() == SUNDAY: # this should never really happen
 			end_date -= timedelta(days=2)
 
+		if end_date < datetime.today():
+			self.add_error('Past deadline', '"{}" ({}) should have been completed by {}'.format(task.description, category, end_date.date()))
 		
 		duration = int(task.category_duration(category))
 
@@ -260,7 +262,12 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 
 		return (cur_dt, available_effort)
 
-	def _schedule_task_wout_deadline(self, task, first_available_date, max_effort, category, all_tasks):
+	def _schedule_preconditioned_task(self, task, first_available_date, max_effort, category, all_tasks, prev_deadlined_task, next_deadlined_task):
+		
+		print('Place "{} after "{}" but before "{}" in category "{}"'.format(task.name, prev_deadlined_task, next_deadlined_task, category))
+		return first_available_date
+
+	def _schedule_task_wout_deadline(self, task, first_available_date, max_effort, category, all_tasks, completed_before_date=None):
 		MONDAY=0
 		FRIDAY=4
 		SATURDAY=5
@@ -322,9 +329,12 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 			if duration > 0:
 				cur_dt = next_available_weekday(cur_dt)
 
+		if completed_before_date is not None and completed_before_date < cur_dt:
+			self.add_error('Prerequirement mismatch', '{}: "{}" should have been completed before {}. Instead it will be done by {}'.format(category, task.description, task.prerequirement_for_deadlined, cur_dt.date()))
 
 		task.set_slots_for_category(category, slots)
 
+		# FIXME: It it be returning the cur_dt?
 		return first_available_date
 
 
@@ -343,6 +353,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 
 		sections = set([task.section for task in tasks_wout_deadline])
 		sections = sorted(list(sections)) # order the set, for limited randomness
+
 
 		section_tasks = {}
 		section_countdown = {}
@@ -375,23 +386,70 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 	def _compute_schedule_for_category(self, tasks, category, stats):
 		"""
 		End date is understood such, that max_load can be done also on that day
+
+		Steps:
+		1. Place all deadlined tasks the latest possible - ensure deadlines OK
+		2. Place all prerequisites the soonest possible - ensure deadlines OK
+		3. Place everything else based on priorities - play with fire
+
+		Thus 2 levels of errors:
+		CRITICAL: deadlined task cannot be finished
+		SEVERE: preconditioned task cannot be finished 
 		"""
 		max_load = stats.max_load_for_category(category)
 		last_available_date = datetime(2999, 12, 12)
 		remaing_effort = max_load
-		tasks_w_deadline = list(filter(lambda t: t.meta.end_date is not None, tasks))
+		tasks_w_deadline = [t for t in tasks if t.meta.end_date is not None]
+		tasks_w_deadline = sorted(tasks_w_deadline, key=attrgetter('meta.end_date'), reverse=True)
 		tasks_wout_deadline = list(filter(lambda t: t.meta.end_date is None, tasks))
 		tasks_wout_deadline = self._prioritize_tasks(tasks_wout_deadline, stats)
+		tasks_preconditioned = []
 
-		tasks_w_deadline = sorted(tasks_w_deadline, key=attrgetter('meta.end_date'), reverse=True)
+		num_tasks_w_deadline = len(tasks_w_deadline)
 
 		for task in tasks_w_deadline:
 			(last_available_date, remaing_effort) = self._schedule_task_with_deadline(task, last_available_date, remaing_effort, max_load, category)
 
+		# Step 2: Place all prerequisites the soonest possible
+		# First, find all prerequisites tasks
+		for task in tasks_wout_deadline:
+			prerequirement_for = self._find_next_deadlined_task(task, category) 
+			if prerequirement_for:
+				task.prerequirement_for_deadlined = prerequirement_for
+				task.depends_on_deadlined = self._find_prev_deadlined_task(task, category)
+				tasks_preconditioned.append(task)
+				# print('{}: {} < {} < {}'.format(category, depends_on, task, prerequirement_for))
+
+		# Second, schedule them
+		tasks_preconditioned = self._prioritize_tasks(tasks_preconditioned, stats)
 		first_available_date = datetime.combine(date.today(), datetime.min.time())
+		remaing_effort = max_load # assume start at 0 (to avoid modifying schedule during the day)
+		for task in tasks_preconditioned:
+			after = first_available_date if task.depends_on_deadlined is None else task.depends_on_deadlined.scheduled_end_date(category)
+
+			before = None if task.prerequirement_for_deadlined is None else task.prerequirement_for_deadlined.scheduled_start_date(category) # end of day
+			new_first_available_date = self._schedule_task_wout_deadline(task, after, max_load, category, tasks, before)
+			first_available_date = new_first_available_date if task.depends_on_deadlined is None else first_available_date
+
+		# Step 3: Place all remaining tasks based on priorities
+		tasks_wout_deadline = listdiff(tasks_wout_deadline, tasks_preconditioned)
 		remaing_effort = max_load # assume start at 0 (to avoid modifying schedule during the day)
 		for task in tasks_wout_deadline:
 			first_available_date = self._schedule_task_wout_deadline(task, first_available_date, max_load, category, tasks)
+
+	def _find_prev_deadlined_task(self, task, category):
+		prev_deadlined_tasks = [t for t in task.section.tasks if t.meta.end_date and t.pos < task.pos and t.has_category(category)]
+		if len(prev_deadlined_tasks) > 0:
+			return prev_deadlined_tasks[-1]
+		else:
+			return None
+
+	def _find_next_deadlined_task(self, task, category):
+		next_deadlined_tasks = [t for t in task.section.tasks if t.meta.end_date and t.pos > task.pos and t.has_category(category)]
+		if len(next_deadlined_tasks) > 0:
+			return next_deadlined_tasks[0]
+		else:
+			return None
 
 	def _compute_schedule(self, sections, statistics):
 		sections = [section for section in sections if section.weight > 0]
@@ -401,8 +459,8 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 
 		schedules = []
 		for category in statistics.categories:
-			category_tasks = filter(lambda t: t.has_category(category), all_tasks)
-			self._compute_schedule_for_category(list(category_tasks), category, statistics)
+			category_tasks = [t for t in all_tasks if t.has_category(category)]
+			self._compute_schedule_for_category(category_tasks, category, statistics)
 
 	def _fold_links(self):
 		startMarker = "]("
