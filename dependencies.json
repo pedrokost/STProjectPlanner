@@ -1,7 +1,15 @@
 {
    "*": {
       "*": [
-         "requests"
+        "requests"
+      ],
+      ">=3080": [
+        "requests",
+      	"pygments",
+        "python-markdown",
+        "mdpopups",
+        "python-jinja2",
+        "markupsafe"
       ]
    }
 }

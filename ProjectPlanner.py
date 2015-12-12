@@ -6,6 +6,7 @@ from operator import attrgetter, methodcaller, itemgetter
 from time import gmtime, strftime
 import random
 import sublime, sublime_plugin
+import mdpopups
 from .models import Task, Section, Statistics, DaySlot
 from .models import human_duration
 from .utils import sparkline, truncate_middle, weeknumber, fmtweek
@@ -645,6 +646,47 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 
 		self.view.replace(edit, replace_region, '\n\n' + content)
 
+	def _show_tooltip(self, sections):
+		cursor = self.view.sel()[0].begin()
+		line = self.view.line(cursor)
+
+		line_content = self.view.substr(line)
+
+		if line_content.startswith('-'):
+			task = None
+			for s in sections:
+				task = s.find_by_line(line_content)
+				if task is not None:
+					break
+
+			if task:
+				content = ''
+				categories = task.categories()
+				max_len = max([len(c) for c in categories])
+				data = []
+				for cat in categories:
+					data.append((
+						cat,
+						task.scheduled_start_date(cat).date(),
+						task.scheduled_end_date(cat).date()
+					))
+
+				data = sorted(data, key=itemgetter(1))
+
+				for d in data:
+					if  d[1] == d[2]:
+						content += '{:.>{}}: {}\n\n'.format(
+							d[0],
+							max_len,
+							d[1])
+					else:
+						content += '{:.>{}}: {} - {}\n\n'.format(
+							d[0],
+							max_len,
+							d[1],
+							d[2])
+				mdpopups.show_popup(self.view, content)
+
 	def run(self, edit):
 
 		self.errors = []
@@ -666,3 +708,5 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 		self._update_timestamp_and_errors(edit)
 
 		self._fold_links()
+
+		self._show_tooltip(sections)

@@ -314,6 +314,12 @@ class Section(object):
 
 		return str
 
+	def find_by_line(self, line):
+		for t in self.tasks:
+			if t.raw == line:
+				return t
+		return None
+
 	@property
 	def raw_tasks(self):
 		is_task = lambda line: line.startswith(self.TASK_IDENTIFIER)
