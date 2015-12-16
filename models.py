@@ -123,27 +123,31 @@ class Task(object):
 		"""
 		Date-precesion of task start date
 		"""
+
+		slots = []
 		if category in ['All', 'Deadlined']:
-			all_slots = []
 			for cat in self.categories():
-				all_slots += self.get_slots_for_category(cat)
-			all_dates = [s.date for s in all_slots]
-			return min(all_dates)
-		slots = self.get_slots_for_category(category)
-		return slots[-1].date
+				slots += self.get_slots_for_category(cat)
+		else:
+			slots = self.get_slots_for_category(category)
+			
+		all_dates = [s.date for s in slots]
+		return min(all_dates)
 
 	def scheduled_end_date(self, category):
 		"""
 		Date-precision of task end date.
 		"""
+
+		slots = []
 		if category in ['All', 'Deadlined']:
-			all_slots = []
 			for cat in self.categories():
-				all_slots += self.get_slots_for_category(cat)
-			all_dates = [s.date for s in all_slots]
-			return max(all_dates)
-		slots = self.get_slots_for_category(category)
-		return slots[0].date
+				slots += self.get_slots_for_category(cat)
+		else:
+			slots = self.get_slots_for_category(category)
+
+		all_dates = [s.date for s in slots]
+		return max(all_dates)
 
 	@property
 	def has_deadline(self):

@@ -582,7 +582,6 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 		title_width = MAX_WIDTH - for_weeks - 1
 		fmt_string = '{:<' + str(title_width) + '} {}\n'
 
-
 		data = []
 		smallest = 0
 		largest = 40

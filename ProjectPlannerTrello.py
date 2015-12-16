@@ -7,7 +7,7 @@ from collections import namedtuple, Counter
 
 from .lib import trollop
 from .lib import sublime_requests as requests
-from .models import Task, Section, CategorySchedule, Statistics, DaySlot, human_duration
+from .models import Task, Section, Statistics, DaySlot, human_duration
 from .utils import extract_task_metadata
 
 class ProjectPlannerTrelloUp(sublime_plugin.TextCommand):
@@ -54,7 +54,6 @@ class ProjectPlannerTrelloUp(sublime_plugin.TextCommand):
 		sections = ProjectPlannerTrello(edit).extract_sections(content)
 
 		self.__upload_card_order(connection, sections)
-
 
 class ProjectPlannerTrello(sublime_plugin.TextCommand):
 	"""
