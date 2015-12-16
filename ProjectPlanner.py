@@ -2,6 +2,7 @@ import re, os, sys
 from datetime import timedelta, datetime, date
 from collections import namedtuple, Counter
 import operator
+import math
 from operator import attrgetter, methodcaller, itemgetter
 from time import gmtime, strftime
 import random
@@ -58,8 +59,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 
 		return sections
 
-	def _compute_total_weekly_load(self, section, statistics, for_weeks=40):
-
+	def _compute_total_weekly_load(self, section, statistics, for_weeks=40, quarter_breaks=False):
 		tasks = [task for task in section.tasks]
 		categorized_effort = self.__compute_weekly_load(tasks, statistics)
 		
@@ -71,10 +71,17 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 				total_effort[week] += categorized_effort[key]['effort'][week]
 
 		weekly_efforts = []
+		QUARTER_CHANGE_DELIMETER = None
+		prev_quarter = None
 		for x in range(for_weeks):
-			week = fmtweek(date.today() + timedelta(weeks=x))
+			dt = date.today() + timedelta(weeks=x)
+			new_quarter = math.ceil(dt.month / 3.) 
+			if quarter_breaks and prev_quarter and prev_quarter != new_quarter:
+				weekly_efforts.append(QUARTER_CHANGE_DELIMETER)
+			week = fmtweek(dt)
 			week_eff = total_effort[week] if week in total_effort else 0
 			weekly_efforts.append(week_eff)
+			prev_quarter = new_quarter
 
 		return weekly_efforts
 
@@ -87,7 +94,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 		last_point = 0
 		for section in sections:
 			if section.is_valid:
-				weekly_load = self._compute_total_weekly_load(section, statistics)
+				weekly_load = self._compute_total_weekly_load(section, statistics, quarter_breaks=self.show_quarters)
 				spark = sparkline(weekly_load)
 
 				if section.needs_update:
@@ -603,18 +610,20 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 		match = re.search('.+(?P<to_scale>to scale)\s*', self.view.substr(line))
 		to_scale = True if match and match.group('to_scale') else to_scale
 
-		MAX_WIDTH = 76
-		title_width = MAX_WIDTH - for_weeks - 1
-		fmt_string = '{:<' + str(title_width) + '} {}\n'
-
 		data = []
 		smallest = 0
 		largest = 40
 		for section in sections:
 			if section.is_valid:
-				weekly_load = self._compute_total_weekly_load(section, statistics, for_weeks=for_weeks)
-				largest = max(largest, max(weekly_load))
+				weekly_load = self._compute_total_weekly_load(section, statistics, for_weeks=for_weeks, quarter_breaks=self.show_quarters)
+				largest = max(largest, max([w for w in weekly_load if w is not None]))
 				data.append((weekly_load, section.title[3:]))
+
+		MAX_WIDTH = 76
+		title_width = MAX_WIDTH - for_weeks - 1
+		title_width -= len([w for w in weekly_load if w is None])
+
+		fmt_string = '{:<' + str(title_width) + '} {}\n'
 
 		if not to_scale:
 			largest = 40
@@ -715,7 +724,9 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 
 		self.errors = []
 		self.myrandomseed = 4567
-		
+		conf = sublime.load_settings('ProjectPlanner.sublime-settings')
+		self.show_quarters = conf.get('show_quarters_on_graphs')
+
 		content=self.view.substr(sublime.Region(0, self.view.size()))
 		sections = self._extract_sections(content)
 		

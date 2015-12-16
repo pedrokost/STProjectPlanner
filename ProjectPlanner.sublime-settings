@@ -7,5 +7,6 @@
     "TRELLO_TEST_BOARD_ID": "",
     "SKIP_LISTS": [],
     "SKIP_CHECKLISTS": [],
-    "DONE_LISTS": []
+    "DONE_LISTS": [],
+    "show_quarters_on_graphs": false
 }

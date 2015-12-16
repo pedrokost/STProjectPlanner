@@ -8,11 +8,15 @@ def listdiff(a, b):
     return [aa for aa in a if aa not in b]
 
 def sparkline(values, smallest=-1, largest=-1):
+	"""
+	Treats null values are quarter breaks
+	"""
 	if len(values) == 0:
 		return ''
 
+	original_values = values
 	ticks = ['▁', '▂', '▃', '▄', '▅', '▆', '▇']
-	values = [float(val) for val in values]
+	values = [float(val) for val in values if val is not None]
 	smallest = min(values) if smallest == -1 else smallest
 	largest = max(values) if largest == -1 else largest
 	rng = largest - smallest
@@ -22,9 +26,9 @@ def sparkline(values, smallest=-1, largest=-1):
 		rng = largest - 0
 
 	if rng != 0:
-		return ''.join([  ticks[min(scale, round(((val - smallest) / rng) * scale))] for val in values  ])
+		return ''.join([  ticks[min(scale, round(((val - smallest) / rng) * scale))] if val is not None else '│'for val in original_values  ])
 	else:
-		return ''.join([ticks[0] for val in values])
+		return ''.join([ticks[0] for val in original_values])
 
 
 def truncate_middle(s, n):
