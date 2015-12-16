@@ -273,6 +273,11 @@ class Section(object):
 		self._weight = float(priority_match.group('weight')) if priority_match else 1
 
 	@property
+	def pretty_title(self):
+	    return self.title[2:].strip()
+	
+
+	@property
 	def title(self):
 		title = self.lines[0]
 		if re.search('\(.+\)', title):

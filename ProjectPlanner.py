@@ -384,6 +384,26 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 
 		return prioritized_tasks
 
+	def _check_correct_deadlined_task_ordering(self, tasks, category):
+		# group tasks by group
+		sections = list(set([t.section for t in tasks]))
+
+		for section in sections:
+			section_tasks = [t for t in tasks if t.section == section]
+
+			for i in range(len(section_tasks) - 1):
+				if section_tasks[i].meta.end_date > section_tasks[i+1].meta.end_date:
+					self.add_error(
+						'Incorrect ordering of tasks with deadline',
+						'{}: Task *{}* with deadline {} should be placed after task *{}* with deadline {} '.format(
+								section.pretty_title,
+								section_tasks[i].description,
+								section_tasks[i].meta.end_date.date(),
+								section_tasks[i+1].description,
+								section_tasks[i+1].meta.end_date.date()
+							)
+						)
+
 	def _compute_schedule_for_category(self, tasks, category, stats):
 		"""
 		End date is understood such, that max_load can be done also on that day
@@ -397,10 +417,15 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 		CRITICAL: deadlined task cannot be finished
 		SEVERE: preconditioned task cannot be finished 
 		"""
+
+
 		max_load = stats.max_load_for_category(category)
 		last_available_date = datetime(2999, 12, 12)
 		remaing_effort = max_load
 		tasks_w_deadline = [t for t in tasks if t.meta.end_date is not None]
+
+		self._check_correct_deadlined_task_ordering(tasks_w_deadline, category)
+
 		tasks_w_deadline = sorted(tasks_w_deadline, key=attrgetter('meta.end_date'), reverse=True)
 		tasks_wout_deadline = list(filter(lambda t: t.meta.end_date is None, tasks))
 		tasks_wout_deadline = self._prioritize_tasks(tasks_wout_deadline, stats)
