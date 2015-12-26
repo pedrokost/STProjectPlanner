@@ -126,11 +126,14 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 			return
 
 		def upcoming_cat_task_group_content(task_group, num_tasks, category):
-			# TODO: could use the actual schduler now :)
 			sorted_tasks = sorted(task_group.tasks, key=methodcaller('scheduled_start_date', category))
 
 			sorted_tasks_string = '\n\n### ' + task_group.title + ' upcoming tasks\n\n' if task_group.show_title else ''
 			sorted_tasks_string += '\n'.join([str(task) for task in sorted_tasks[:num_tasks]])
+
+			if len(sorted_tasks) == 0:
+				sorted_tasks_string += 'There are not tasks in this category'
+
 			return sorted_tasks_string
 
 		line = self.view.line(index_section)
