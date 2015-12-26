@@ -247,14 +247,16 @@ class Section(object):
 	TASK_IDENTIFIER = '- '
 	COMPLETED_TASK_IDENTIFIER = '+ '
 	# TASK_META_REGEX = '\[(\w{3})?\s?(?:(\d{1,})(h|d|w|m|q))?\s?(\d{4}-\d{2}-\d{2}.*)?\]'
-	DURATION_MAP = {
-		'h': 1,
-		'd': 8,
-		'w': 40,
-		'm': 168,
-		# 'q': 504
-	}
 
+	# In minutes
+	DURATION_MAP = {
+		'm': 1,
+		'h': 60,
+		'd': 480,
+		'w': 2400,
+		'M': 10080,
+		# 'q': 504,
+	}
 	def __init__(self, lines, is_valid, row_at):
 		'Create new instance of Section(lines, is_valid)'
 
@@ -398,7 +400,7 @@ class Statistics(object):
 		CONFIG_SECTION_TITLE = '## Plan: Configuration'
 		CONFIG_WORKLOAD_TASK = 'Daily Workload'
 		conf = sublime.load_settings('ProjectPlanner.sublime-settings')
-		default_workload = conf.get('default_daily_category_workload', 8)
+		default_workload = conf.get('default_daily_category_workload', 8 * 60) # 8 hours in minutes
 
 		workloads_dict = defaultdict(lambda: default_workload)
 

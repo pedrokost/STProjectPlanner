@@ -97,7 +97,7 @@ def has_optional_flag(string):
 	return string is not None and "M" in string
 
 def extract_categories(string):
-	CATEGORY_REGEX = '(?P<cat>\w{3,})?\s?(?P<duration>\d+(h|d|w|m|q))?'
+	CATEGORY_REGEX = '(?P<cat>\w{3,})?\s?(?P<duration>\d+(m|h|d|w|M|q))?'
 
 	categories = {}
 

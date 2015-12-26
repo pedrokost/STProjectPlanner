@@ -57,7 +57,7 @@ Examples:
 - `- Prepare landing page [Design 4h Code 2d 2015-02-45]`: Save as above, with deadline.
 - `- Write blog post [M Josh 4h]`: Categories can also be people. This task is optional.
 
-Valid **time** identifiers are: `h`our, `d`ay, `w`week, and `m`onth
+Valid **time** identifiers are: `m`inute, `h`our, `d`ay, `w`week, and `M`onth
 
 Valid **categories** are: any string of length 2 or more characters.
 

@@ -308,7 +308,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 
 
 		def available_effort(all_tasks, max_effort, cur_dt, category):
-			
+
 			def slots_of_day(slot, dt):
 				return slot.date.date() == dt.date()
 
