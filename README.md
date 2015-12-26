@@ -215,7 +215,6 @@ The following preference options are available:
 |Option| Description | Example|
 |------|------------|---------|
 |`default_daily_category_workload`| Duration of an average work day in hours | 8|
-| `category_workloads` | For each category it is possible to set the maximum daily effort in hours | `[{"name": "Design","workload": 3}, {"name": "iOS", "workload": 7}]` |
 |`TRELLO_API_KEY`| The API key for Trello | `...` |
 |`TRELLO_API_SECRET`| The API secret for Trello | `...` |
 |`TRELLO_TOKEN`| Trello token | `...` |

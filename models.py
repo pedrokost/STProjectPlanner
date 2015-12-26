@@ -1,10 +1,11 @@
 import re
 import sys
 from datetime import timedelta, datetime, date
+from collections import defaultdict
 from collections import namedtuple, Counter
 from operator import attrgetter, itemgetter
 import sublime, sublime_plugin
-from .utils import human_duration, mean, extract_task_metadata
+from .utils import human_duration, mean, extract_task_metadata, to_minutes
 
 class DaySlot(object):
 	"""WorkDay(date, hours)"""
@@ -275,7 +276,6 @@ class Section(object):
 	@property
 	def pretty_title(self):
 	    return self.title[2:].strip()
-	
 
 	@property
 	def title(self):
@@ -392,6 +392,30 @@ class Statistics(object):
 		self.all_tasks = self._compute_alltasks(sections)
 		self.categories = self._compute_categories()
 		self.category_means = self._compute_category_means()
+		self.category_workloads = self._extract_category_overrides()
+
+	def _extract_category_overrides(self):
+		CONFIG_SECTION_TITLE = '## Plan: Configuration'
+		CONFIG_WORKLOAD_TASK = 'Daily Workload'
+		conf = sublime.load_settings('ProjectPlanner.sublime-settings')
+		default_workload = conf.get('default_daily_category_workload', 8)
+
+		workloads_dict = defaultdict(lambda: default_workload)
+
+		config_section = [sec for sec in self.sections if sec.title == CONFIG_SECTION_TITLE]
+		if len(config_section) == 0:
+			return workloads_dict
+		workload_task = [t for t in config_section[0].raw_tasks if CONFIG_WORKLOAD_TASK in t]
+		if len(workload_task) == 0:
+			return workloads_dict
+		workload_task = workload_task[0]
+		workloads = [c.strip() for c in workload_task.split(':')[1].split(',')]
+
+		for workload in workloads:
+			cat, dur = workload.split(' ')
+			workloads_dict[cat] = to_minutes(dur, Section.DURATION_MAP)
+
+		return workloads_dict
 
 	def _compute_alltasks(self, sections):
 		nested_tasks = map(lambda section: section.tasks, sections)
@@ -403,14 +427,7 @@ class Statistics(object):
 		return sorted(list(set(all_categories)))
 
 	def max_load_for_category(self, category):
-		conf = sublime.load_settings('ProjectPlanner.sublime-settings')
-		default_workload = conf.get('default_daily_category_workload')
-		overrides = conf.get("category_workloads", [])
-
-		workload = next((x['workload'] for x in overrides if x['name'] == category), default_workload)
-
-
-		return workload # 8 hours
+		return self.category_workloads[category]
 
 	def _compute_category_means(self):
 		# Compute mean and median duration of each category's task

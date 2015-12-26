@@ -3,6 +3,11 @@ from operator import attrgetter, methodcaller, itemgetter
 import re
 from collections import namedtuple
 
+def to_minutes(durstr, duration_map):
+	value = durstr[:-1]
+	unit = durstr[-1]
+	return int(value) * duration_map[unit]
+
 def listdiff(a, b):
     b = set(b)
     return [aa for aa in a if aa not in b]

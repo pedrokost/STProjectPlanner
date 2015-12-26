@@ -21,6 +21,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 		'## Summary',
 		'## Effort planning',
 		'## Trello warnings',
+		'## Plan: Configuration',
 	]
 	
 	def __section_indices(self, lines):

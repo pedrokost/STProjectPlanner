@@ -1,6 +1,5 @@
 {
     "default_daily_category_workload": 8,
-    "category_workloads": [],
     "TRELLO_API_KEY": "",
     "TRELLO_API_SECRET": "",
     "TRELLO_TOKEN": "",
