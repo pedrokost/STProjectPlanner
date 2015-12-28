@@ -8,8 +8,7 @@ Last Trello down sync: 2015-12-12
 
 ## Plan: Configuration
 
-Des 8h
-And 3d
+- Daily Workload: Des 8h, And 3d
 
 ## Plan: Upcoming tasks
 

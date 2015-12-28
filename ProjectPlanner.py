@@ -112,11 +112,11 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 
 	def _update_upcoming_tasks(self, sections, edit, statistics):
 		"""
-		Print the top upcoming tasks in the `### Upcoming tasks` section. 
+		Print the top upcoming tasks in the `## Plan: Upcoming tasks` section. 
 		"""
 		DEFAULT_NUM_TASKS = 10
 		NUM_TASKS_PER_CATEGORY = 5
-		UPCOMING_TASKS_SECTION_REGEX = '### (\d+\s)?[Uu]pcoming tasks'
+		UPCOMING_TASKS_SECTION_REGEX = '## Plan: (\d+\s)?[Uu]pcoming tasks'
 		SHOW_TASKS_BY_CATEGORY = True
 
 		sections = [section for section in sections if section.weight > 0]
