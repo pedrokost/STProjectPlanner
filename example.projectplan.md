@@ -1,21 +1,46 @@
 # My Plan
 
-Last updated: 2015-11-28
+```
+Math  3M 2d ##############################
+ Jap  2w 2d #####
+ Art     2w ####
+None     2w ####
+ Bio  1w 1m ##
+ Por     2d 
+```
 
-## Summary
+## Plan: Information
 
-### Upcoming tasks
+Last updated: 2015-12-28
 
+There are errors in your plan:
+
+*Past deadline*:
+- "Learn to draw boxes" (Art) should have been completed by 2015-12-24
+- "Learn to draw boxes" (Math) should have been completed by 2015-12-24
+- "Study for exam for calculus" (Math) should have been completed by 2015-12-17
+- "Study for exam for sums" (Math) should have been completed by 2015-12-14
+
+*Prerequirement mismatch*:
+- Math: "Learn sums" should have been completed before - Study for exam for sums [Math 1d 2015-12-14]. Instead it will be done by 2016-01-01
+- Math: "Learn calculus" should have been completed before - Study for exam for calculus [Math 3d 2015-12-17]. Instead it will be done by 2016-01-20
+
+## Plan: Configuration
+
+- Daily Workload: Math 8h
+
+## Plan: Upcoming tasks
+
+- Learn to draw boxes [Art 2w Math 4d 2015-12-24]
+- Study for exam for sums [Math 1d 2015-12-14]
+- Study for exam for calculus [Math 3d 2015-12-17]
+- Learn calculus [Math 3w]
+- Learn sums [Math 1w]
 - Read biology book [Bio 1m]
 - Study portuguese [Por 2d]
 - Pick a book to start learning Japanese [Jap 10d Math 3w]
 - Learn to cook [2w]
-- Study for exam for sums [Math 1d 2015-12-14]
-- Study for exam for calculus [Math 3d 2015-12-17]
-- Learn to draw boxes [Art 2w Math 4d 2015-12-24]
 - Learn about complex numbers [Math 2w Jap 2d]
-- Learn sums [Math 1w]
-- Learn calculus [Math 3w]
 
 ### Art upcoming tasks
 
@@ -33,11 +58,11 @@ Last updated: 2015-11-28
 
 ### Math upcoming tasks
 
-- Pick a book to start learning Japanese [Jap 10d Math 3w]
 - Study for exam for sums [Math 1d 2015-12-14]
 - Study for exam for calculus [Math 3d 2015-12-17]
+- Learn calculus [Math 3w]
 - Learn to draw boxes [Art 2w Math 4d 2015-12-24]
-- Learn about complex numbers [Math 2w Jap 2d]
+- Learn sums [Math 1w]
 
 ### None upcoming tasks
 
@@ -47,46 +72,45 @@ Last updated: 2015-11-28
 
 - Study portuguese [Por 2d]
 
-## Effort planning
+### Deadlined upcoming tasks
 
-### Total estimated effort
+- Learn to draw boxes [Art 2w Math 4d 2015-12-24]
+- Study for exam for sums [Math 1d 2015-12-14]
+- Study for exam for calculus [Math 3d 2015-12-17]
+- [Prepare for biology midterm](https://trello.com/c/oaf76ars/23-prepare-for-biology-midterm) [Bio 1w 2016-03-02]
+- Study for exam for linear algebra [Math 1w 2016-04-01]
+
+## Plan: Total estimated effort
 
 ```
-Math  3m 2d ##############################
- Bio  1m 1w ###########
+Math  3M 2d ##############################
  Jap  2w 2d #####
-None     2w ####
  Art     2w ####
+None     2w ####
+ Bio  1w 1m ##
  Por     2d 
 ```
 
-### Weekly effort timeline
+## Plan: 3 Weekly effort timeline
 
 ```
          Art    Bio    Jap    Math   None   Por    
-2015W48                                            
-2015W49         |||||  |||||  |||||  |||||  ||     
-2015W50  |      |||||  |||||  |||||  |||||         
-2015W51  |||||  |||||  ||     |||||                
-2015W52  ||||   |||||         |||||                
-2015W53         |             |||||                
-2016W01                       |||||                
-2016W02                       |||||                
-2016W03                       |||||                
-2016W04                       |||||                
+2015W53                |||||  |||||  |||||  ||     
+2016W01                |||||  |||||  |||||         
+2016W02                ||     |||||                
 ```
 
-### Section schedule
+## Plan: 50w Section schedule to scale
 
 ```
-School stuff                                  ▁▇▇▇▇▂▁▃▇▇▇▇▇▄▅▁▁▁▇▁▁▁▁▁▁▁▁▁▁▁
-Language studies                              ▁▇▇▂▂▅▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
-Side projects                                 ▁▇▇▇▇▃▇▅▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+School stuff          ▇│▅▅▅▅▁▁▁▃▄▁▁▁▅│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁
+Language studies      ▅│▅▁▁▁▅▅▅▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁
+Side projects         ▅│▅▃▁▁▁▁▁▅▅▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁
 ```
 
 ## School stuff (1x)
-[9 tasks, 3m 1d 2h (Math 1m 3w, Bio 1m 1w, Por 2d)]
-⌚▁▆▄▇▄▂▁▂▄▄▄▄▄▃▃▁▁▁▄▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+[9 tasks, 2M 1d 2h 1m (Math 1M 3w, Bio 1w 1m, Por 2d)]
+⌚▇│▅▅▅▅▁▁▁▃▄▁▁▁▅│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁
 
 - Learn sums [Math 1w]
 - Study for exam for sums [Math 1d 2015-12-14]
@@ -102,14 +126,14 @@ Side projects                                 ▁▇▇▇▇▃▇▅▁▁▁�
 - Study portuguese [Por 2d]
 
 ## Language studies (7x)
-[1 tasks, 1m 4d (Math 3w, Jap 2w)]
-⌚▁▇▇▂▂▃▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+[1 tasks, 1M 4d (Math 3w, Jap 2w)]
+⌚▇│▇▁▁▁▇▇▇▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁
 
 - Pick a book to start learning Japanese [Jap 10d Math 3w]
 
 ## Side projects (7x)
-[3 tasks, 1m 3w (Math 2w 4d, Art 2w, None 2w, Jap 2d)]
-⌚▁▅▅▆▇▃▅▃▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+[3 tasks, 1M 3w (Math 2w 4d, None 2w, Art 2w, Jap 2d)]
+⌚▇│▇▃▁▁▁▁▁▇▇▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁
 
 - Make the world a better place [M Art 2w]
 - Learn to draw boxes [Art 2w Math 4d 2015-12-24]
