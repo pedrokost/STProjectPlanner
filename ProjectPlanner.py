@@ -21,18 +21,24 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 		'## Summary',
 		'## Effort planning',
 		'## Trello warnings',
-		'## Plan: Configuration',
-		'## Plan: Information',
+		'## Plan:*',
 	]
 	
 	def __section_indices(self, lines):
 		SectionIndex = namedtuple('SectionIndex', ['index', 'is_valid'])
 		indices = []
+
+		def is_section_valid(line):
+			if not line.startswith(self.SECTION_IDENTIFIER):
+				return False
+			for invalid_section in self.INVALID_SECTIONS:
+				if re.match(invalid_section, line):
+					return False
+			return True
+
 		for index, line in enumerate(lines):
 			if line.startswith(self.HEADING_IDENTIFIER):
-				is_valid_section = line.startswith(self.SECTION_IDENTIFIER) and \
-					not line in self.INVALID_SECTIONS
-				indices.append(SectionIndex(index, is_valid_section))
+				indices.append(SectionIndex(index, is_section_valid(line)))
 		indices.append(SectionIndex(len(lines), False))
 
 		return indices
@@ -143,7 +149,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 
 		default_num_tasks = int(match.group('num_tasks')) if match else DEFAULT_NUM_TASKS
 
-		nested_tasks = map(lambda section: section.tasks, sections)
+		nested_tasks = [section.tasks for section in sections]
 
 		UpcomingTaskGroup = namedtuple('UpcomingTaskGroup', ['title', 'tasks', 'show_title'])
 
@@ -168,7 +174,6 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 			show_title = True,
 			tasks = list(filter(lambda task: task.has_deadline, all_tasks))	
 		))
-
 
 		all_task_groups_content = []
 		for task_group in upcoming_task_groups:
