@@ -18,8 +18,6 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 	HEADING_IDENTIFIER = '#'
 	SECTION_IDENTIFIER = '## '
 	INVALID_SECTIONS = [
-		'## Summary',
-		'## Effort planning',
 		'## Trello warnings',
 		'## Plan:*',
 	]
@@ -207,7 +205,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 	def _update_planned_effort(self, sections, edit, statistics):
 		effort_content = self._content_for_total_effort_chart(sections)
 
-		line = self.view.line(self.view.find('^### Total estimated effort', 0))
+		line = self.view.line(self.view.find('^## Plan: Total estimated effort', 0))
 		next_section_index = self.view.find('^##', line.end()).begin()
 		replace_region = sublime.Region(line.end(), next_section_index)
 		self.view.replace(edit, replace_region, '\n\n' + effort_content + '\n\n')
@@ -565,7 +563,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 
 	def _draw_weekly_schedule(self, sections, edit, statistics):
 
-		heading_region = self.view.find('^### (\d+w? )?Week(.+) effort timeline', 0)
+		heading_region = self.view.find('^## Plan: (\d+w? )?Week(.+) effort timeline', 0)
 		if heading_region.begin() == -1:
 			return
 
@@ -607,7 +605,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 
 	def _draw_section_schedule(self, sections, edit, statistics, to_scale=False):
 
-		heading_region = self.view.find('^### (\d+w )?[Ss]ection schedule', 0)
+		heading_region = self.view.find('^## Plan: (\d+w )?[Ss]ection schedule', 0)
 		if heading_region.begin() == -1:
 			return
 
