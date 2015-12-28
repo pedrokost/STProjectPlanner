@@ -22,6 +22,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 		'## Effort planning',
 		'## Trello warnings',
 		'## Plan: Configuration',
+		'## Plan: Information',
 	]
 	
 	def __section_indices(self, lines):
@@ -669,7 +670,8 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 
 	def _update_timestamp_and_errors(self, edit):
 
-		heading_region = self.view.find('^# ', 0)
+		heading_region = self.view.find('## Plan: Information', 0, sublime.LITERAL)
+
 		if heading_region.begin() == -1:
 			return
 

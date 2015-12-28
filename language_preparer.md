@@ -1,4 +1,4 @@
-## My Magic plan
+# My Magic plan
 
 ## Plan: Information
 
