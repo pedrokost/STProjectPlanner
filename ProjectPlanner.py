@@ -203,9 +203,15 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
 		return effort_content
 
 	def _update_planned_effort(self, sections, edit, statistics):
+
+
+		heading_region = self.view.find('^## Plan: Total estimated effort', 0)
+		if heading_region.begin() == -1:
+			return
+
 		effort_content = self._content_for_total_effort_chart(sections)
 
-		line = self.view.line(self.view.find('^## Plan: Total estimated effort', 0))
+		line = self.view.line(heading_region)
 		next_section_index = self.view.find('^##', line.end()).begin()
 		replace_region = sublime.Region(line.end(), next_section_index)
 		self.view.replace(edit, replace_region, '\n\n' + effort_content + '\n\n')
