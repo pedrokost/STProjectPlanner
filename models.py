@@ -12,7 +12,7 @@ class DaySlot(object):
 	def __init__(self, date, hours):
 		self.date = date
 		self.hours = hours
-		
+
 	def __repr__(self):
 		return "%s - %d hours" % (self.date, self.hours)
 
@@ -26,6 +26,8 @@ class Task(object):
 		def extract_description(task):
 			TASK_META_MATCH_REGEX = '\[(?P<flags>M\s?)?(?P<categories>(\d+\w\s?)?(\w+)?(\w+\s\d+\w\s?)*)(?P<end_date>\d{4}-\d{2}-\d{2})?\]$'
 			meta_index = re.search(TASK_META_MATCH_REGEX, task)
+
+			# Strips the initial -/+ sign
 			if meta_index:
 				description = task[2:meta_index.start()]
 			else:

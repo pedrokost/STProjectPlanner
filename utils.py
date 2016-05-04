@@ -97,8 +97,15 @@ def has_optional_flag(string):
 	return string is not None and "M" in string
 
 def extract_categories(string):
-	CATEGORY_REGEX = '(?P<cat>\w{3,})?\s?(?P<duration>\d+(m|h|d|w|M|q))?'
+	"""
+	30m
+	5w
+	Math 2w
+	Math 3d Jap 9w
+	Bio
+	"""
 
+	CATEGORY_REGEX = '(?P<cat>[a-zA-Z]{3,})?\s?(?P<duration>\d+(m|h|d|w|M|q))?'
 	categories = {}
 
 	for match in re.finditer(CATEGORY_REGEX, string):
@@ -123,7 +130,7 @@ def parse_end_date(str):
 	return datetime.strptime(str, DATE_FORMAT) if str else None
 
 def extract_task_metadata(task):
-	TASK_META_MATCH_REGEX = '\[((?P<flags>M)(?![a-zA-Z])\s?)?(?P<categories>(\d+\w\s?)?(\w{2,})?(\w{2,}\s\d+\w\s?)*)(?P<end_date>\d{4}-\d{2}-\d{2})?\]$'
+	TASK_META_MATCH_REGEX = '\[((?P<flags>M)(?![a-zA-Z])\s?)?(?P<categories>(\d+\w\s?)?(\w{3,})?(\w{3,}\s\d+\w\s?)*)(?P<end_date>\d{4}-\d{2}-\d{2})?\]$'
 
 	TaskMeta = namedtuple('TaskMeta', ['optional', 'categories', 'end_date'])
 	matches = re.search(TASK_META_MATCH_REGEX, task)
@@ -132,6 +139,7 @@ def extract_task_metadata(task):
 
 		optional = has_optional_flag(matches.group('flags'))
 		categories = extract_categories(matches.group('categories'))
+
 		end_date = parse_end_date(matches.group('end_date'))
 
 		meta = TaskMeta(

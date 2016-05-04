@@ -120,9 +120,7 @@ Side projects         ▃▄▄▁▃▄▂▁▁│▁▁▁▁▁▁▁▁▁�
 - Study for exam for calculus [Math 3d 2016-12-17]
 - Learn linear algebra [Math]
 - Read biology book [Bio 1m]
-
 - [Prepare for biology midterm](https://trello.com/c/oaf76ars/23-prepare-for-biology-midterm) [Bio 1w 2016-03-02]
-
 - Study for exam for linear algebra [Math 1w 2016-04-01]
 - Learn about vertex machines [M]
 - Study portuguese [Por 2d]
