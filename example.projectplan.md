@@ -11,7 +11,7 @@ None     2w ####
 
 ## Plan: Information
 
-Last updated: 2016-05-04
+Last updated: 2016-05-07
 
 There are errors in your plan:
 
@@ -20,7 +20,7 @@ There are errors in your plan:
 - "Study for exam for linear algebra" (Math) should have been completed by 2016-04-01
 
 *Prerequirement mismatch*:
-- Bio: "Read biology book" should have been completed before - [Prepare for biology midterm](https://trello.com/c/oaf76ars/23-prepare-for-biology-midterm) [Bio 1w 2016-03-02]. Instead it will be done by 2016-05-04
+- Bio: "Read biology book" should have been completed before - [Prepare for biology midterm](https://trello.com/c/oaf76ars/23-prepare-for-biology-midterm) [Bio 1w 2016-03-02]. Instead it will be done by 2016-05-09
 - Math: "Learn calculus" should have been completed before - Study for exam for calculus [Math 3d 2016-12-17]. Instead it will be done by 2017-01-12
 - Math: "Learn linear algebra" should have been completed before - Study for exam for linear algebra [Math 1w 2016-04-01]. Instead it will be done by 2017-01-24
 
@@ -97,22 +97,22 @@ None     2w ####
 
 ```
          Art    Bio    Jap    Math   None   Por    
-2016W18                |||    |||    |||    ||     
-2016W19                |||||  |||||  |||||         
-2016W20                ||||   |||||  ||            
+2016W18                                            
+2016W19                |||||  |||||  |||||  ||     
+2016W20                |||||  |||||  |||||         
 ```
 
 ## Plan: 50w Section schedule to scale
 
 ```
-School stuff          ▄▂▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▄▂▄│▄▄▄▂▁▁▁▁▁▁▁▁▁│▁▁
-Language studies      ▃▆▆▄▂▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁
-Side projects         ▃▄▄▁▃▄▂▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▄▇▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁
+School stuff          ▁▅▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▃▂▄│▄▄▄▂▁▁▁▁▁▁▁▁│▁▁▁
+Language studies      ▁▄▇▄▄▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁
+Side projects         ▁▄▄▂▁▄▄▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▄▆▁│▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁
 ```
 
 ## School stuff (1x)
 [9 tasks, 2M 1d 2h 1m (Math 1M 3w, Bio 1w 1m, Por 2d)]
-⌚▇▃▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▆▂▇│▇▇▇▂▁
+⌚▁▇▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▄▂▅│▅▅▅▂▁
 
 - Learn sums [Math 1w]
 - Study for exam for sums [Math 1d 2016-12-14]
@@ -127,13 +127,13 @@ Side projects         ▃▄▄▁▃▄▂▁▁│▁▁▁▁▁▁▁▁▁�
 
 ## Language studies (7x)
 [1 tasks, 1M 4d (Math 3w, Jap 2w)]
-⌚▃▇▆▅▃▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁
+⌚▁▄▇▄▄▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁
 
 - Pick a book to start learning Japanese [Jap 10d Math 3w]
 
 ## Side projects (7x)
 [3 tasks, 1M 3w (Math 2w 4d, Art 2w, None 2w, Jap 2d)]
-⌚▃▄▄▁▃▄▂▁▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▄▇▁│▁▁▁▁▁
+⌚▁▄▄▂▁▄▄▁│▁▁▁▁▁▁▁▁▁▁▁▁▁│▁▁▁▁▁▁▁▁▁▁▁▄▇▁│▁▁▁▁▁
 
 - Make the world a better place [M Art 2w]
 - Learn to draw boxes [Art 2w Math 4d 2016-12-24]

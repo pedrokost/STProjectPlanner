@@ -1,0 +1,38 @@
+%YAML 1.2
+---
+name: ProjectPlanner
+file_extensions: [projectplan.md]
+scope: source.plan
+
+contexts:
+  main: 
+    - match: '^-'
+      push: task_pending
+    - match: '^\+[\s\w]+$'
+      scope: task.completed
+    - match: '^##\s?Plan\:[\w\s]+$'
+      scope: subsection.generated
+    - match: '^##[\w\s]+$'
+      scope: subsection.manual
+
+  task_pending:
+    - meta_scope: task.pending
+    - match: '\['
+      push: task_meta
+    - match: '$'
+      scope: task.pending
+      pop: true
+
+  task_meta:
+    - meta_scope: task.meta
+    - match: '[a-zA-Z]\b'
+      scope: task.flag.maybe
+    - match: '[a-zA-Z]{3,}\b'
+      scope: task.category
+    - match: '(\d+)(m|h|d|w|M|y)'
+      captures:
+        1: task.duration.value
+        2: task.duration.unit
+    - match: '\]'
+      scope: task.meta 
+      pop: true

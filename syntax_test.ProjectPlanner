@@ -1,0 +1,46 @@
+// SYNTAX TEST "Packages/ProjectPlanner/ProjectPlanner.sublime-syntax"
+
+- Task
+// ^ source.plan task.pending
+
++ This is a completed task
+// <- source.plan task.completed
+
+- Task [M]
+// <- source.plan task.pending
+//      ^ task.flag.maybe
+
+- Task [M Cat]
+//        ^^^ task.category
+
+- Task [M Cat 7w]
+//        ^^^ task.category
+//            ^^ task.duration
+//            ^ task.duration.value
+//             ^ task.duration.unit
+
+- Task [Cat 3d]
+       // <- task.meta
+       	// <- task.category
+       	//  ^^ task.duration
+       	//  ^ task.duration.value
+       	//   ^ task.duration.unit
+
+- Task [Cat 3d Jap 10d]
+       	// <- task.category
+       	         // <- task.category
+       	//  ^^ task.duration
+       	//         ^^^ task.duration
+
+- Task [Cat]
+       	// <- task.category
+
+- Task [M 5m]
+        // <- task.flag.maybe
+          // <- task.duration
+
+## This my a cateogry
+// <- source.plan subsection.manual
+
+## Plan: automatic category
+// <- source.plan subsection.generated
