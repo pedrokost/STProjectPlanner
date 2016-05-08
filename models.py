@@ -27,6 +27,7 @@ class Task(object):
 			TASK_META_MATCH_REGEX = '\[(?P<flags>M\s?)?(?P<categories>(\d+\w\s?)?(\w+)?(\w+\s\d+\w\s?)*)(?P<end_date>\d{4}-\d{2}-\d{2})?\]$'
 			meta_index = re.search(TASK_META_MATCH_REGEX, task)
 
+
 			# Strips the initial -/+ sign
 			if meta_index:
 				description = task[2:meta_index.start()]

@@ -10,8 +10,16 @@
 // <- source.plan task.pending
 //      ^ task.flag.maybe
 
+- Task [http://www.g.co](g.com) string [Cat 999w]
+// <- source.plan task.pending
+//                                     ^^^^^^^^^^ task.meta
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   task.description
+
 - Task [M Cat]
 //        ^^^ task.category
+
+- Task
+//^^^^ task.description
 
 - Task [M Cat 7w]
 //        ^^^ task.category
@@ -31,6 +39,9 @@
        	         // <- task.category
        	//  ^^ task.duration
        	//         ^^^ task.duration
+
+- Task [2015-02-01]
+//      ^^^^^^^^^^ task.deadline
 
 - Task [Cat]
        	// <- task.category

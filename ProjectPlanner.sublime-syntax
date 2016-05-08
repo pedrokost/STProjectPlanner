@@ -17,8 +17,14 @@ contexts:
 
   task_pending:
     - meta_scope: task.pending
-    - match: '\['
+    # any text up to a meta or link
+    - match: '[^\[]+'
+      scope: task.description
+    # [ later followed by ]( is a link, not a task.meta
+    - match: '\[(?!.*\]\s*\()'
       push: task_meta
+    - match: '\[.+\]\(.+\)'
+      scope: task.description
     - match: '$'
       scope: task.pending
       pop: true
@@ -33,6 +39,9 @@ contexts:
       captures:
         1: task.duration.value
         2: task.duration.unit
+    - match: '\d{4}-\d{2}-\d{2}'
+      scope: task.deadline
     - match: '\]'
       scope: task.meta 
       pop: true
+    # match end: error
