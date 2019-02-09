@@ -8,5 +8,6 @@
     { "caption": "Preferences: ProjectPlanner Settings - Default",
         "command": "open_file",
         "args": {"file": "${packages}/ProjectPlanner/ProjectPlanner.sublime-settings"}
-    }
+    },
+    { "caption": "Project Planner render Timeline", "command": "project_planner_timeline_view" },
 ]

@@ -1,2 +1,5 @@
 deps
 README.html
+assets/vis-4.21.0/*
+*.sublime-project
+*.sublime-workspace

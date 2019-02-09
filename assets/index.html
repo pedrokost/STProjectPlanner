@@ -1,0 +1,39 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Timeline basic demo</title>
+		<script data-replace-script src="vis-4.21.0/vis.min.js"></script>
+		<link data-replace-stylesheet href="vis-4.21.0/vis.css" rel="stylesheet" type="text/css" />
+		<style type="text/css">
+			body, html {
+				font-family: sans-serif;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="plan_per_section"></div>
+		<div id="plan_per_person"></div>
+		<script type="text/javascript">
+		var section_container = document.getElementById('plan_per_section');
+		var person_container = document.getElementById('plan_per_person');
+
+		var section_data = [
+			{id: 1, content: 'item 1', start: '2013-04-20'},
+			{id: 2, content: 'item 2', start: '2013-04-14'},
+			{id: 3, content: 'item 3', start: '2013-04-18'},
+			{id: 4, content: 'item 4', start: '2013-04-16', end: '2013-04-19'},
+			{id: 5, content: 'item 5', start: '2013-04-25'},
+			{id: 6, content: 'item 6', start: '2013-04-27'}
+		];
+
+		// INJECT DATA HERE
+
+		// TODO: inject another JSON
+		var person_data = section_data;
+
+		var options = {};
+		var timeline = new vis.Timeline(section_container, section_data, options);
+		var timeline = new vis.Timeline(person_container, person_data, options);
+		</script>
+	</body>
+</html>
