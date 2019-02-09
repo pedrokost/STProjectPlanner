@@ -769,3 +769,6 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
         self._fold_links()
 
         self._show_tooltip(sections)
+
+        # This is used by ProjectPlannerTimelineView
+        self.sections = sections

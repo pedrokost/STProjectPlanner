@@ -8,32 +8,58 @@
 			body, html {
 				font-family: sans-serif;
 			}
+
+			.vis-item {
+				background-color: #003eff2e;
+			}
+
+			.vis-item .vis-item-overflow {
+				overflow: visible;
+			}
+
+			.vis-item.task-group {
+	            background-color: transparent;
+	            border-style: dashed!important;
+	            z-index: 0;
+	        }
+
+	        .vis-item.task-group .vis-item-content {
+	            margin-left: 4em; // width of categories
+	        }
 		</style>
 	</head>
 	<body>
 		<div id="plan_per_section"></div>
 		<div id="plan_per_person"></div>
 		<script type="text/javascript">
-		var section_container = document.getElementById('plan_per_section');
-		var person_container = document.getElementById('plan_per_person');
+		var sectionContainer = document.getElementById('plan_per_section');
 
-		var section_data = [
-			{id: 1, content: 'item 1', start: '2013-04-20'},
-			{id: 2, content: 'item 2', start: '2013-04-14'},
-			{id: 3, content: 'item 3', start: '2013-04-18'},
-			{id: 4, content: 'item 4', start: '2013-04-16', end: '2013-04-19'},
-			{id: 5, content: 'item 5', start: '2013-04-25'},
-			{id: 6, content: 'item 6', start: '2013-04-27'}
-		];
+		var sectionData = {
+			items: [
+				{id: 1, content: 'item 1', start: '2013-04-20'},
+				{id: 2, content: 'item 2', start: '2013-04-14'},
+				{id: 3, content: 'item 3', start: '2013-04-18'},
+				{id: 4, content: 'item 4', start: '2013-04-16', end: '2013-04-19'},
+				{id: 5, content: 'item 5', start: '2013-04-25'},
+				{id: 6, content: 'item 6', start: '2013-04-27'}
+			]
+
+		}
 
 		// INJECT DATA HERE
 
-		// TODO: inject another JSON
-		var person_data = section_data;
+		var options = {
+	        stack: false,
+	        stackSubgroups: false,
+	    };
 
-		var options = {};
-		var timeline = new vis.Timeline(section_container, section_data, options);
-		var timeline = new vis.Timeline(person_container, person_data, options);
+	    var items = new vis.DataSet({
+	    	type: { start: 'ISODate', end: 'ISODate' }
+	    });
+	    items.add(sectionData.items);
+	    var groups = new vis.DataSet(sectionData.groups);
+
+		var timeline = new vis.Timeline(sectionContainer, items, groups, options);
 		</script>
 	</body>
 </html>
