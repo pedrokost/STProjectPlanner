@@ -65,18 +65,30 @@ class ProjectPlannerTimelineView(sublime_plugin.TextCommand):
 
         groups = []
         items = []
+        all_categories = []
 
         item_sequential_id = 1
         subgroup_sequential_id = 1
+
+        min_date = datetime.datetime(5000, 1, 1, 0)
+        max_date = datetime.datetime(1000, 1, 1, 0)
 
         for section_index, section in enumerate(valid_sections):
             if len(section.tasks) < 1:
                 continue
 
             group_id = 'group-' + str(section_index)
+
+            general_subgroup_stacking = {}
+            for category in section.categories():
+                general_subgroup_stacking['sg_' + category] = True
+                all_categories.append(category)
+
             groups.append({
                 'id': group_id,
-                'content': section.pretty_title
+                'content': section.pretty_title,
+                'subgroupStack': general_subgroup_stacking,
+                'value': section_index
             })
 
             tasks = section.tasks
@@ -108,31 +120,46 @@ class ProjectPlannerTimelineView(sublime_plugin.TextCommand):
                     item_sequential_id += 1
 
                 for category in categories:
-                    name = '<span style="color:#97B0F8;">(' + category + ')</span>'
+                    name = '<span class="item-category">' + category + '</span>'
                     if len(categories) <= 1:
                         name += ' ' + task.name
+
+                    start = task.scheduled_start_date(category)
+                    end = task.scheduled_end_date(category)
 
                     item = {
                         'id': item_sequential_id,
                         'content': name,
-                        'start': task.scheduled_start_date(category),
-                        'end': task.scheduled_end_date(category),
+                        'start': start,
+                        'end': end,
                         'group': group_id,
-                        'subgroup': 'sg_' + category if subgroup_id is None else subgroup_id
+                        'subgroup': 'sg_' + category if subgroup_id is None else subgroup_id,
+                        'className': '',
+                        'category': category
                     }
+
+                    if task.has_deadline:
+                        item['className'] += ' deadline'
+
+                    if item['end'] < datetime.datetime.today():
+                        item['className'] += ' deadline-missed'
 
                     items.append(item)
 
                     item_sequential_id += 1
 
-        # TODO: for each task-category create an item
-        # TODO: group task-categories into subgroups
+                    if start < min_date:
+                        min_date = start
 
-        print(items)
+                    if end > max_date:
+                        max_date = end
 
         return {
             'items': items,
-            'groups': groups
+            'groups': groups,
+            'minDate': min_date,
+            'maxDate': max_date,
+            'categories': list(set(all_categories))
         }
 
     def build_content(self, sections):
@@ -155,7 +182,8 @@ class ProjectPlannerTimelineView(sublime_plugin.TextCommand):
 
         data = "var sectionData = %s;" % (json.dumps(data, default=json_formatter), )
 
-        # TODO: inject the data dictionary
         html = html.replace('// INJECT DATA HERE', data, 1)
+        title = sections[0].pretty_title
+        html = html.replace('{{TITLE}}', title)
 
         return html

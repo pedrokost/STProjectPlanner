@@ -357,6 +357,12 @@ class Section(object):
     def all_tasks(self):
         return self._all_tasks
 
+    def categories(self):
+        l = [task.categories() for task in self.tasks]
+        flat_list = [item for sublist in l for item in sublist]
+
+        return set(flat_list)
+
     @property
     def duration(self):
         total_duration = 0  # lowest units based on DURATION_MAP

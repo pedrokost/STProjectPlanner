@@ -1,36 +1,99 @@
 <!DOCTYPE HTML>
 <html>
 	<head>
-		<title>Timeline basic demo</title>
+		<title>{{TITLE}} - Project Plan</title>
 		<script data-replace-script src="vis-4.21.0/vis.min.js"></script>
 		<link data-replace-stylesheet href="vis-4.21.0/vis.css" rel="stylesheet" type="text/css" />
 		<style type="text/css">
 			body, html {
 				font-family: sans-serif;
+				font-size: 12px;
+				margin: 0;
+			}
+
+			h1 {
+				float: left;
+				font-size: 20px;
+				margin: 0;
+				margin-right: 20px;
 			}
 
 			.vis-item {
-				background-color: #003eff2e;
+				/*background-color: #003eff2e;*/
+				background-color: #c5d2ff;
+				border: none;
+			}
+
+			#plan_per_section {
+				position: fixed;
+				bottom: 0;
+				left: 0;
+				right: 0;
+			}
+
+			.item-category {
+				color: #6d6977;
+			}
+
+			.vis-item.vis-range {
+				border: none;
 			}
 
 			.vis-item .vis-item-overflow {
 				overflow: visible;
 			}
 
+			.vis-item .vis-item-content {
+				padding: 2px 4px;
+			}
+
 			.vis-item.task-group {
-	            background-color: transparent;
-	            border-style: dashed!important;
-	            z-index: 0;
+				background-color: #003eff0f;
+	            border: none;
+	            z-index: 2;
+	        }
+
+	        .vis-item.deadline {
+	        	/*border-color: #003be6;*/
+    			background-color: #f9c5ff;
+	        }
+
+	        .vis-item.deadline-missed {
+	        	/*border-color: #f897aa;*/
+	        	background-color: #ff00682e;
 	        }
 
 	        .vis-item.task-group .vis-item-content {
 	            margin-left: 4em; // width of categories
 	        }
+
+	        .vis-time-axis .vis-grid.vis-minor {
+	        	border: none;
+	        }
+
+	        /* alternating column backgrounds */
+			.vis-time-axis .vis-grid.vis-odd {
+				background: #f5f5f5;
+			}
+
+			/* gray background in weekends, white text color */
+			.vis-time-axis .vis-grid.vis-saturday,
+			.vis-time-axis .vis-grid.vis-sunday {
+				background: #dadada;
+			}
+			/*.vis-time-axis .vis-text.vis-saturday,
+			.vis-time-axis .vis-text.vis-sunday {
+				color: white;
+			}*/
+
 		</style>
 	</head>
 	<body>
+		<h1>{{TITLE}}</h1>
+		<select id="categories">
+			<option value="-1">Select category to highlight</option>
+		</select>
 		<div id="plan_per_section"></div>
-		<div id="plan_per_person"></div>
 		<script type="text/javascript">
 		var sectionContainer = document.getElementById('plan_per_section');
 
@@ -42,16 +105,34 @@
 				{id: 4, content: 'item 4', start: '2013-04-16', end: '2013-04-19'},
 				{id: 5, content: 'item 5', start: '2013-04-25'},
 				{id: 6, content: 'item 6', start: '2013-04-27'}
-			]
-
+			],
+			categories: []
 		}
 
 		// INJECT DATA HERE
 
 		var options = {
-	        stack: false,
-	        stackSubgroups: false,
+	        stack: true,
+	        stackSubgroups: true,
+	        margin: 2,
+	        orientation: 'top',
+	        groupOrder: function (a, b) {
+              	return a.value - b.value;
+            },
+            groupOrderSwap: function (a, b, groups) {
+            	var v = a.value;
+            	a.value = b.value;
+            	b.value = v;
+            },
+            groupEditable: true,
+            height: 'calc(100vh - 20px)'
 	    };
+	    if(sectionData.minDate) {
+	    	options['min'] = sectionData.minDate;
+	    }
+	    if(sectionData.maxDate) {
+	    	options['max'] = sectionData.maxDate;
+	    }
 
 	    var items = new vis.DataSet({
 	    	type: { start: 'ISODate', end: 'ISODate' }
@@ -60,6 +141,29 @@
 	    var groups = new vis.DataSet(sectionData.groups);
 
 		var timeline = new vis.Timeline(sectionContainer, items, groups, options);
+
+
+		var selectTag = document.getElementById('categories');
+		sectionData.categories.forEach(function(category) {
+			var option = document.createElement('option');
+			option.value = category;
+		    option.text = category;
+		    selectTag.appendChild(option);
+		});
+
+		selectTag.addEventListener("change", function() {
+
+			var idsToSelect = items.get({
+				fields: ['id'],
+				filter: function (item) {
+					return item.category === selectTag.value;
+				}
+			}).map(function(item) {
+				return item.id;
+			});
+
+			timeline.setSelection(idsToSelect, {focus: true})
+		});
 		</script>
 	</body>
 </html>
