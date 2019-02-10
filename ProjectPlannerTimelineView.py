@@ -11,15 +11,53 @@ import json
 from .ProjectPlanner import ProjectPlannerCompile
 
 
+def slugify(s):
+    """
+    Simplifies ugly strings into something URL-friendly.
+    >>> print slugify("[Some] _ Article's Title--")
+    some-articles-title
+    """
+
+    # "[Some] _ Article's Title--"
+    # "[some] _ article's title--"
+    s = s.lower()
+
+    # "[some] _ article's_title--"
+    # "[some]___article's_title__"
+    for c in [' ', '-', '.', '/']:
+        s = s.replace(c, '_')
+
+    # "[some]___article's_title__"
+    # "some___articles_title__"
+    s = re.sub('\W', '', s)
+
+    # "some___articles_title__"
+    # "some   articles title  "
+    s = s.replace('_', ' ')
+
+    # "some   articles title  "
+    # "some articles title "
+    s = re.sub('\s+', ' ', s)
+
+    # "some articles title "
+    # "some articles title"
+    s = s.strip()
+
+    # "some articles title"
+    # "some-articles-title"
+    s = s.replace(' ', '-')
+
+    return s
+
+
 def save_utf8(filename, text):
     """Save to UTF8 file."""
     with codecs.open(filename, 'w', encoding='utf-8')as f:
         f.write(text)
 
 
-def get_temp_preview_path(view):
-    # TODO: filename could come from first line of projectplan.md file!
-    tmp_filename = 'project-plan-%s.html' % view.id()
+def get_temp_preview_path(view, title):
+    tmp_filename = 'project-plan-%s-%s.html' % (slugify(title), view.id())
     tmp_dir = tempfile.gettempdir()
     if not os.path.isdir(tmp_dir):  # create directory if not exists
         os.makedirs(tmp_dir)
@@ -53,9 +91,9 @@ class ProjectPlannerTimelineView(sublime_plugin.TextCommand):
         sections = planner.sections
 
         # Open the file in the browser
-        html = self.build_content(sections)
+        html, title = self.build_content(sections)
 
-        tmp_fullpath = get_temp_preview_path(self.view)
+        tmp_fullpath = get_temp_preview_path(self.view, title)
         save_utf8(tmp_fullpath, html)
 
         open_in_browser(tmp_fullpath)
@@ -186,4 +224,4 @@ class ProjectPlannerTimelineView(sublime_plugin.TextCommand):
         title = sections[0].pretty_title
         html = html.replace('{{TITLE}}', title)
 
-        return html
+        return (html, title)
