@@ -312,7 +312,13 @@ class Section(object):
 
     @property
     def needs_update(self):
-        return self.lines[1].startswith('[')
+        # Note: something is autoformatting my markdown
+        # and placing a newline after the project heading. So,
+        # in case the second line is empty space, check the next one.
+        if self.lines[1] == '' and len(self.lines) > 2:
+            return self.lines[2].startswith('[')
+        else:
+            return self.lines[1].startswith('[')
 
     @property
     def summary(self):

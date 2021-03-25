@@ -100,6 +100,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
         Below each section write a short summary of number of tasks and
         planned durations
         """
+        
         SPARK_START = "⌚"
         last_point = 0
         for section in sections:
@@ -108,16 +109,27 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
                 spark = sparkline(weekly_load)
 
                 if section.needs_update:
-                    content = section.summary + '\n' + SPARK_START + spark
-                    line = self.view.line(self.view.find(section.lines[1], last_point, sublime.LITERAL))
-                    next_line = self.view.line(line.end() + 1)
 
-                    self.view.replace(edit, sublime.Region(line.begin(), next_line.end()), content)
+                    content = section.summary + '\n' + SPARK_START + spark
+
+                    # Handle for weird Markdown plugin (unknown) inserting newlines
+                    # after heading
+                    search_line = section.lines[1]
+                    if len(section.lines) > 2 and section.lines[1] == '':
+                        search_line = section.lines[2]
+
+                    line = self.view.line(self.view.find(search_line, last_point, sublime.LITERAL))
+                    next_line = self.view.line(line.end() + 1)
+                    region = sublime.Region(line.begin(), next_line.end())
+
+                    self.view.replace(edit, region, content)
+                    last_point = line.begin() + len(content)
                 else:
                     content = '\n' + section.summary + '\n' + SPARK_START + spark
                     line = self.view.find(section.lines[0], last_point, sublime.LITERAL)
                     self.view.insert(edit, line.end(), content)
-                last_point = line.end()
+                    last_point = line.begin() + len(content)
+                # last_point = line.end()
 
     def _update_upcoming_tasks(self, sections, edit, statistics):
         """

@@ -1,0 +1,10 @@
+[x] deadlined tasks should be different color
+[x] errored tasks should be different color
+[x] collapse design vertically, so many entries fit per line
+[x] limit max left and right scroll to fix tontent
+[] Fix naming of categories affecting priorities.
+[] max height - vertical pan instead of scroll!
+[x] rendre basic chart by user
+[] Messages for new release
+[] Refactor teh Timeline View code
+[] Deploy new release
