@@ -11,11 +11,13 @@ import random
 import sublime
 import sublime_plugin
 import mdpopups
+from collections import defaultdict
 from .models import Task, Section, Statistics, DaySlot
 from .models import human_duration
 from .utils import sparkline, truncate_middle, weeknumber, fmtweek
 from .utils import next_available_weekday, human_duration, weighted_sampling_without_replacement
 from .utils import listdiff
+
 
 
 class ProjectPlannerCompile(sublime_plugin.TextCommand):
@@ -312,6 +314,12 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
         SATURDAY = 5
         SUNDAY = 6
 
+        daily_available_effort = defaultdict(lambda: max_effort) 
+
+        for task in all_tasks:
+            for slot in task.get_slots_for_category(category):
+                daily_available_effort[slot.date.date()] -= slot.hours
+
         duration = task.category_duration(category)
 
         # Don't plan work for weekends
@@ -333,27 +341,10 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
                 delta = timedelta(days=1)
             return dt + delta
 
-        def available_effort(all_tasks, max_effort, cur_dt, category):
-
-            def slots_of_day(slot, dt):
-                return slot.date.date() == dt.date()
-
-            cur_dt_date = cur_dt.date()
-
-            day_slots = []
-            for task in all_tasks:
-                for slot in task.get_slots_for_category(category):
-                    if slot.date.date() == cur_dt_date:
-                        day_slots.append(slot)
-                        break
-
-            allocated_effort = sum([slot.hours for slot in day_slots])
-            return max_effort - allocated_effort
-
         slots = []
         cur_dt = first_available_date
         while duration > 0:
-            remaing_effort = available_effort(all_tasks, max_effort, cur_dt, category)
+            remaing_effort = daily_available_effort[cur_dt.date()]
             if remaing_effort == 0:
                 cur_dt = next_available_weekday(cur_dt)
                 continue
@@ -376,6 +367,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
         # FIXME: It it be returning the cur_dt?
         return first_available_date
 
+  
     def _prioritize_tasks(self, tasks_wout_deadline, stats):
         """
         reoader tasks_wout_deadline based on the section probabilitisc
@@ -461,6 +453,7 @@ class ProjectPlannerCompile(sublime_plugin.TextCommand):
         tasks_w_deadline = [t for t in tasks if t.meta.end_date is not None]
 
         self._check_correct_deadlined_task_ordering(tasks_w_deadline, category)
+
 
         tasks_w_deadline = sorted(tasks_w_deadline, key=attrgetter('meta.end_date'), reverse=True)
         tasks_wout_deadline = list(filter(lambda t: t.meta.end_date is None, tasks))
